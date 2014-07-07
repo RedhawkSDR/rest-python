@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Domain view</title>
+    <!--link href="../static/bootstrap.min.css" rel="stylesheet" type=text/css>
+    <link href="../static/bootstrap-theme.min.css" rel="stylesheet" type=text/css-->
+    <link href="../static/bootstrap.css" rel="stylesheet" type=text/css>
+    <link href="../static/bootstrap-theme.css" rel="stylesheet" type=text/css>
+    <link href="../static/rh.css" rel="stylesheet" type=text/css>
+  </head>
+  <body role="document">
+<script src="../static/js/jquery.min.js" type="text/javascript"></script>
+<script src="../static/js/bootstrap.min.js" type="text/javascript"></script>
+<script src="../static/js/events.js" type="text/javascript"></script>
+<script src="../static/js/devmgrs.js" type="text/javascript"></script>
+
+  <h3>Domains</h3>
+<div class="container">
+  <div id="content">
+    <ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
+      <li class="active"><a id="DomainName" href="#red" data-toggle="tab">{{ name }}</a></li>
+    </ul>
+    <div id="domainTab" class="tab-content">
+    </div>
+    <script>
+        var domainmanager_accordion = accordionElement("domainManager_acc", "domainManager_acc",1,"domainmanager","primary","panel-collapse_domainMgr");
+        domainmanager_accordion.a_1.innerHTML="Domain Manager";
+        document.getElementById("domainTab").appendChild(domainmanager_accordion.div_1);
+        domMgrAccordion(domainmanager_accordion.div_5);
+    </script>
+    <script>
+        var devicemanager_accordion = accordionElement("deviceManagers_acc", "deviceManagers_acc",1,"devicemanagers","primary","panel-collapse_devMgrs");
+        devicemanager_accordion.a_1.innerHTML="Device Managers";
+        document.getElementById("domainTab").appendChild(devicemanager_accordion.div_1);
+    </script>
+    <script>
+        var applications_accordion = accordionElement("applications_acc", "applications_acc",1,"applications","primary","panel-collapse_applications");
+        applications_accordion.a_1.innerHTML="Applications";
+        document.getElementById("domainTab").appendChild(applications_accordion.div_1);
+    </script>
+      <div class="btn-group" id="dropdown-applications">
+        <button type="button" data-toggle="dropdown" class="btn btn-primary dropdown-toggle">Launch Application <span class="caret"></span></button>
+        <ul class="dropdown-menu" id="dropdown-applications_list">
+        </ul>
+      </div>
+  </div>
+</div> <!-- container -->
+<script>
+$("#dropdown-applications").on("shown.bs.dropdown", function(e) {
+    retrieveAvailableApps(function(data){
+            domain = JSON.parse(data);
+            availableApps = domain.availableApps;
+            var app_set = []
+            var app_iter = document.getElementById("dropdown-applications_list").childNodes;
+            for (var app_idx in availableApps) {
+                var app_name = availableApps[app_idx].name;
+                var app_sad = availableApps[app_idx].sad;
+                var foundApp = false;
+                for (var li_idx in app_iter) {
+                    if (app_name == app_iter[li_idx].innerHTML) {
+                        foundApp = true;
+                        break;
+                    }
+                }
+                if (foundApp == true) {
+                    continue;
+                }
+                var app_li_element = document.createElement("li");
+                app_element = document.createElement("a");
+                app_set.push(app_element);
+                app_set[app_set.length-1].setAttribute("href",document.URL+"/launch_app?waveform="+app_sad);
+                app_set[app_set.length-1].onclick = function() {launchApp(app_sad,function(data){console.log(data);return false;});return false;};
+                app_set[app_set.length-1].innerHTML = app_name
+                console.log(app_name, app_sad);
+                app_li_element.appendChild(app_set[app_set.length-1]);
+                document.getElementById("dropdown-applications_list").appendChild(app_li_element);
+            }
+        });
+});
+
+$("#dropdown-applications").on("hidden.bs.dropdown", function(e) {
+});
+
+$(".panel-collapse_applications").on("show.bs.collapse", function(e) {
+    if (e.target.id == "applications_acc") { // get device managers
+        retrieveApps(function(data){
+            domain = JSON.parse(data);
+            addToAccordion(domain.applications,document.getElementById("applications_acc"),"name","name",appAccordion);
+            cleanAccordion(domain.applications,document.getElementById("applications_acc"),"name","name",appAccordion);
+        });
+    } else {
+        var app_to_retrieve = getGroupingFromAccordion(e.target.id, document.getElementById("applications_acc").childNodes);
+        if (app_to_retrieve[1] != '') { // is it an application?
+            retrieveApp(app_to_retrieve[1], function(data) {
+                app = JSON.parse(data);
+                subsets = app.app;
+                var dev_iter = document.getElementById(app_to_retrieve[2].getAttribute("data-modgroup_id")).childNodes;
+                for (i=0; i<subsets.length; i++) {
+                    if (typeof(subsets[i].comp) != 'undefined') {
+                        var foundDev = isItemInAccordionDiv(subsets[i].comp.id,dev_iter);
+                        if (foundDev == true) {
+                            continue;
+                        }
+                        var dev_element = itemAccordion(subsets[i].comp.id,subsets[i].comp.name,"comp");
+                        document.getElementById(app_to_retrieve[2].getAttribute("data-modgroup_id")).appendChild(dev_element);
+                    }
+                }
+            });
+        }
+        var devs_to_retrieve = getGroupItemsFromAccordion(e.target.id, document.getElementById("applications_acc").childNodes);
+        for (dev_idx=0; dev_idx<devs_to_retrieve.length; dev_idx++) {
+            var dev_to_retrieve = getItemFromAccordion(devs_to_retrieve[dev_idx].getAttribute("data-modgroup_id"), document.getElementById("applications_acc").childNodes);
+            if (dev_to_retrieve[1] != '') { // is it a component?
+                retrieveComp(dev_to_retrieve[1], dev_to_retrieve[2], function(data) {
+                    compmsg = JSON.parse(data);
+                    if (typeof(compmsg.comp) == 'undefined') {
+                        return;
+                    };
+                    addSubstructure(compmsg.comp, "prop", document.getElementById(dev_to_retrieve[4].getAttribute("data-modgroup_id")),"name","value")
+                    addSubstructure(compmsg.comp, "port", document.getElementById(dev_to_retrieve[5].getAttribute("data-modgroup_id")),"","undefined")
+                });
+            }
+        }
+    }
+});
+
+$(".panel-collapse_domainMgr").on("shown.bs.collapse", function(e) {
+    if (e.target.id == "domainManager_acc") { // get device managers
+        retrieveDomMgr(function(data){
+            domain_resp = JSON.parse(data);
+            addSubstructure(domain_resp.domMgr, "prop", document.getElementById("DomainManagerprops"),"name","value")
+        });
+    }
+});
+$(".panel-collapse_domainMgr").on("hidden.bs.collapse", function(e) {
+});
+$(".panel-collapse_devMgrs").on("show.bs.collapse", function(e) {
+    if (e.target.id == "deviceManagers_acc") { // get device managers
+        retrieveDevMgrs(function(data){
+            domain = JSON.parse(data);
+            addToAccordion(domain.domain,document.getElementById("deviceManagers_acc"),"devMgrName","devMgrName",devMgrAccordion);
+            cleanAccordion(domain.domain,document.getElementById("deviceManagers_acc"),"devMgrName","devMgrName",devMgrAccordion);
+        });
+    } else {
+        var devMgr_to_retrieve = getGroupingFromAccordion(e.target.id, document.getElementById("deviceManagers_acc").childNodes);
+        if (devMgr_to_retrieve[1] != '') { // is it a device manager?
+            retrieveDevMgr(devMgr_to_retrieve[1], function(data) {
+                devmgr = JSON.parse(data);
+                subsets = devmgr.devMgr;
+                var dev_iter = document.getElementById(devMgr_to_retrieve[2].getAttribute("data-modgroup_id")).childNodes;
+                for (i=0; i<subsets.length; i++) {
+                    if (typeof(subsets[i].dev) != 'undefined') {
+                        var foundDev = isItemInAccordionDiv(subsets[i].dev.id,dev_iter);
+                        if (foundDev == true) {
+                            continue;
+                        }
+                        var dev_element = itemAccordion(subsets[i].dev.id,subsets[i].dev.name,"dev");
+                        document.getElementById(devMgr_to_retrieve[2].getAttribute("data-modgroup_id")).appendChild(dev_element);
+                    }
+                }
+            });
+        }
+        var devs_to_retrieve = getGroupItemsFromAccordion(e.target.id, document.getElementById("deviceManagers_acc").childNodes);
+        for (dev_idx=0; dev_idx<devs_to_retrieve.length; dev_idx++) {
+            var dev_to_retrieve = getItemFromAccordion(devs_to_retrieve[dev_idx].getAttribute("data-modgroup_id"), document.getElementById("deviceManagers_acc").childNodes);
+            if (dev_to_retrieve[1] != '') { // is it a device?
+                retrieveDev(dev_to_retrieve[1], dev_to_retrieve[2], function(data) {
+                    devmsg = JSON.parse(data);
+                    if (typeof(devmsg.dev) == 'undefined') {
+                        return;
+                    };
+                    addSubstructure(devmsg.dev, "prop", document.getElementById(dev_to_retrieve[4].getAttribute("data-modgroup_id")),"name","value")
+                    addSubstructure(devmsg.dev, "port", document.getElementById(dev_to_retrieve[5].getAttribute("data-modgroup_id")),"","undefined")
+                });
+            }
+        }
+    }
+});
+$(".panel-collapse_devMgrs").on("hidden.bs.collapse", function(e) {
+    console.log('hiding: '+e.target.id,e);
+});
+$(".panel-collapseSingleEntity").on("shown.bs.collapse", function(e) {
+    console.log('single entity showing: '+e.target.id,e);
+});
+$(".panel-collapseSingleEntity").on("hidden.bs.collapse", function(e) {
+    console.log('single entity hiding: '+e.target.id,e);
+});
+</script>
+  <script>
+    function DeviceManagerAddedHandler(e) {
+        var host_id = e.originalTarget.id;
+        var devmgr_element = devMgrAccordion(e.detail.devMgrName,e.detail.devMgrName);
+        document.getElementById("deviceManagers_acc").appendChild(devmgr_element);
+    }
+    function DeviceManagerRemovedHandler(e) {
+        console.log('got a request to remove');
+        console.log(e.detail);
+        
+        removeFromAccordion(document.getElementById("deviceManagers_acc"),e.detail.devMgrName);
+    }
+    function ApplicationAddedHandler(e) {
+        var host_id = e.originalTarget.id;
+        var app_element = appAccordion(e.detail.appName,e.detail.appName);
+        document.getElementById("applications_acc").appendChild(app_element);
+    }
+    function ApplicationRemovedHandler(e) {
+        removeFromAccordion(document.getElementById("applications_acc"),e.detail.appName);
+    }
+    document.getElementById("domainTab").addEventListener("DeviceManagerAdded",DeviceManagerAddedHandler, false);
+    document.getElementById("domainTab").addEventListener("DeviceManagerRemoved",DeviceManagerRemovedHandler, false);
+    document.getElementById("domainTab").addEventListener("ApplicationAdded",ApplicationAddedHandler, false);
+    document.getElementById("domainTab").addEventListener("ApplicationRemoved",ApplicationRemovedHandler, false);
+    if (typeof(EventSource) !== "undefined") {
+        var eventmgr = DevMgrChange(document.getElementById("domainTab"));
+    } else {
+        alert("Not able to support ODM event channel updates"); 
+    }
+  </script>
+
+  </body>
+</html>
