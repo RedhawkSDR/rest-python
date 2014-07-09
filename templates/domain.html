@@ -48,8 +48,8 @@
 <script>
 $("#dropdown-applications").on("shown.bs.dropdown", function(e) {
     retrieveAvailableApps(function(data){
-            domain = JSON.parse(data);
-            availableApps = domain.availableApps;
+            var domain = JSON.parse(data);
+            var availableApps = domain.availableApps;
             var app_set = []
             var app_iter = document.getElementById("dropdown-applications_list").childNodes;
             for (var app_idx in availableApps) {
@@ -57,7 +57,19 @@ $("#dropdown-applications").on("shown.bs.dropdown", function(e) {
                 var app_sad = availableApps[app_idx].sad;
                 var foundApp = false;
                 for (var li_idx in app_iter) {
-                    if (app_name == app_iter[li_idx].innerHTML) {
+                    if (typeof(app_iter[li_idx].childNodes) == 'undefined') {
+                        continue;
+                    }
+                    if (app_iter[li_idx].childNodes.length < 1) {
+                        continue;
+                    }
+                    if (typeof(app_iter[li_idx].childNodes.item(0)) == 'undefined') {
+                        continue;
+                    }
+                    if (typeof(app_iter[li_idx].childNodes.item(0).innerHTML) == 'undefined') {
+                        continue;
+                    }
+                    if (app_name == app_iter[li_idx].childNodes.item(0).innerHTML) {
                         foundApp = true;
                         break;
                     }
@@ -66,12 +78,12 @@ $("#dropdown-applications").on("shown.bs.dropdown", function(e) {
                     continue;
                 }
                 var app_li_element = document.createElement("li");
-                app_element = document.createElement("a");
+                var app_element = document.createElement("a");
                 app_set.push(app_element);
+                app_set[app_set.length-1].setAttribute("data-app_sad",app_sad);
                 app_set[app_set.length-1].setAttribute("href",document.URL+"/launch_app?waveform="+app_sad);
-                app_set[app_set.length-1].onclick = function() {launchApp(app_sad,function(data){console.log(data);return false;});return false;};
+                app_set[app_set.length-1].onclick = function(e) {launchApp(e.target.getAttribute("data-app_sad"),function(data){console.log(data);return false;});return false;};
                 app_set[app_set.length-1].innerHTML = app_name
-                console.log(app_name, app_sad);
                 app_li_element.appendChild(app_set[app_set.length-1]);
                 document.getElementById("dropdown-applications_list").appendChild(app_li_element);
             }
@@ -84,7 +96,7 @@ $("#dropdown-applications").on("hidden.bs.dropdown", function(e) {
 $(".panel-collapse_applications").on("show.bs.collapse", function(e) {
     if (e.target.id == "applications_acc") { // get device managers
         retrieveApps(function(data){
-            domain = JSON.parse(data);
+            var domain = JSON.parse(data);
             addToAccordion(domain.applications,document.getElementById("applications_acc"),"name","name",appAccordion);
             cleanAccordion(domain.applications,document.getElementById("applications_acc"),"name","name",appAccordion);
         });
@@ -92,8 +104,8 @@ $(".panel-collapse_applications").on("show.bs.collapse", function(e) {
         var app_to_retrieve = getGroupingFromAccordion(e.target.id, document.getElementById("applications_acc").childNodes);
         if (app_to_retrieve[1] != '') { // is it an application?
             retrieveApp(app_to_retrieve[1], function(data) {
-                app = JSON.parse(data);
-                subsets = app.app;
+                var app = JSON.parse(data);
+                var subsets = app.app;
                 var dev_iter = document.getElementById(app_to_retrieve[2].getAttribute("data-modgroup_id")).childNodes;
                 for (i=0; i<subsets.length; i++) {
                     if (typeof(subsets[i].comp) != 'undefined') {
@@ -112,7 +124,7 @@ $(".panel-collapse_applications").on("show.bs.collapse", function(e) {
             var dev_to_retrieve = getItemFromAccordion(devs_to_retrieve[dev_idx].getAttribute("data-modgroup_id"), document.getElementById("applications_acc").childNodes);
             if (dev_to_retrieve[1] != '') { // is it a component?
                 retrieveComp(dev_to_retrieve[1], dev_to_retrieve[2], function(data) {
-                    compmsg = JSON.parse(data);
+                    var compmsg = JSON.parse(data);
                     if (typeof(compmsg.comp) == 'undefined') {
                         return;
                     };
@@ -127,7 +139,7 @@ $(".panel-collapse_applications").on("show.bs.collapse", function(e) {
 $(".panel-collapse_domainMgr").on("shown.bs.collapse", function(e) {
     if (e.target.id == "domainManager_acc") { // get device managers
         retrieveDomMgr(function(data){
-            domain_resp = JSON.parse(data);
+            var domain_resp = JSON.parse(data);
             addSubstructure(domain_resp.domMgr, "prop", document.getElementById("DomainManagerprops"),"name","value")
         });
     }
@@ -137,7 +149,7 @@ $(".panel-collapse_domainMgr").on("hidden.bs.collapse", function(e) {
 $(".panel-collapse_devMgrs").on("show.bs.collapse", function(e) {
     if (e.target.id == "deviceManagers_acc") { // get device managers
         retrieveDevMgrs(function(data){
-            domain = JSON.parse(data);
+            var domain = JSON.parse(data);
             addToAccordion(domain.domain,document.getElementById("deviceManagers_acc"),"devMgrName","devMgrName",devMgrAccordion);
             cleanAccordion(domain.domain,document.getElementById("deviceManagers_acc"),"devMgrName","devMgrName",devMgrAccordion);
         });
@@ -145,10 +157,10 @@ $(".panel-collapse_devMgrs").on("show.bs.collapse", function(e) {
         var devMgr_to_retrieve = getGroupingFromAccordion(e.target.id, document.getElementById("deviceManagers_acc").childNodes);
         if (devMgr_to_retrieve[1] != '') { // is it a device manager?
             retrieveDevMgr(devMgr_to_retrieve[1], function(data) {
-                devmgr = JSON.parse(data);
-                subsets = devmgr.devMgr;
+                var devmgr = JSON.parse(data);
+                var subsets = devmgr.devMgr;
                 var dev_iter = document.getElementById(devMgr_to_retrieve[2].getAttribute("data-modgroup_id")).childNodes;
-                for (i=0; i<subsets.length; i++) {
+                for (var i=0; i<subsets.length; i++) {
                     if (typeof(subsets[i].dev) != 'undefined') {
                         var foundDev = isItemInAccordionDiv(subsets[i].dev.id,dev_iter);
                         if (foundDev == true) {
@@ -161,11 +173,11 @@ $(".panel-collapse_devMgrs").on("show.bs.collapse", function(e) {
             });
         }
         var devs_to_retrieve = getGroupItemsFromAccordion(e.target.id, document.getElementById("deviceManagers_acc").childNodes);
-        for (dev_idx=0; dev_idx<devs_to_retrieve.length; dev_idx++) {
+        for (var dev_idx=0; dev_idx<devs_to_retrieve.length; dev_idx++) {
             var dev_to_retrieve = getItemFromAccordion(devs_to_retrieve[dev_idx].getAttribute("data-modgroup_id"), document.getElementById("deviceManagers_acc").childNodes);
             if (dev_to_retrieve[1] != '') { // is it a device?
                 retrieveDev(dev_to_retrieve[1], dev_to_retrieve[2], function(data) {
-                    devmsg = JSON.parse(data);
+                    var devmsg = JSON.parse(data);
                     if (typeof(devmsg.dev) == 'undefined') {
                         return;
                     };

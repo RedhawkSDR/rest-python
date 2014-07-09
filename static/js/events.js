@@ -129,8 +129,6 @@ function DevMgrChange(object)
         if (!msg)
             ws.close();
         else
-            console.log('got message');
-            console.log(msg.data);
             eMgr.message(msg.data);
     }
     window.onbeforeunload = function() {

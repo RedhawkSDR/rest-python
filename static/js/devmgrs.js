@@ -78,7 +78,7 @@ function addToAccordion(json_msg,parent_element,item_id_key,item_name_key,addAcc
 
 function addSubstructure(object_array, attribute_name, parent_element,attribute_id,attribute_value)
 {
-    struct = [];
+    var struct = [];
     for (var idx in object_array) {
         if (typeof(object_array[idx][attribute_name]) == 'undefined') {
             continue;
@@ -89,7 +89,7 @@ function addSubstructure(object_array, attribute_name, parent_element,attribute_
             struct.push({prop_id:object_array[idx][attribute_name][attribute_id],prop_value:object_array[idx][attribute_name][attribute_value]})
         }
     }
-    table = createTable(struct);
+    var table = createTable(struct);
     parent_element.appendChild(table);
 }
 
@@ -201,7 +201,7 @@ function launchApplication()
 
 function createTable(idvalues)
 {
-    container = document.createElement("div");
+    var container = document.createElement("div");
     for (idx=0;idx<idvalues.length;idx++) {
         var row_1 = document.createElement("div");
         row_1.className = "row offset-x1";
@@ -236,7 +236,7 @@ function itemAccordion(group_id, child, item_type)
 
 function isItemInAccordionDiv(item, div_iter) {
     var foundItem = false;
-    for (j=0; j<div_iter.length; j++) {
+    for (var j=0; j<div_iter.length; j++) {
         if (div_iter[j] instanceof HTMLDivElement) {
             if (div_iter[j].hasAttribute("data-group_id")) {
                 if (item == div_iter[j].getAttribute("data-group_id")) {
@@ -255,11 +255,11 @@ function getGroupingFromAccordion(Mgr_id, Mgr_iter)
     if ((document.getElementById(Mgr_id).getAttribute("data-group_type") != 'devMgr')&&(document.getElementById(Mgr_id).getAttribute("data-group_type") != 'App')) {
         return ['undefined',Mgr_to_retrieve,'undefined','undefined','undefined'];
     }
-    for (i=0; i<Mgr_iter.length; i++) {
+    for (var i=0; i<Mgr_iter.length; i++) {
         if (typeof(Mgr_iter[i].id) != 'undefined') {
             var Mgr_iter_level_2 = document.getElementById(Mgr_iter[i].id).childNodes;
             var Mgr_iter_level_3 = Mgr_iter_level_2[0].childNodes;
-            for (j=0; j<Mgr_iter_level_3.length; j++) {
+            for (var j=0; j<Mgr_iter_level_3.length; j++) {
                 if (typeof(Mgr_iter_level_3[j].id) != 'undefined') {
                     var test_id = Mgr_iter_level_3[j].id;
                     if (Mgr_id == test_id) {
@@ -322,7 +322,7 @@ function getItemFromAccordion(dev_id, devMgr_iter)
     var props=0;
     var ports=0;
     var dev_element_sub = dev_element.childNodes;
-    for (iter=0; iter<dev_element_sub.length; iter++) {
+    for (var iter=0; iter<dev_element_sub.length; iter++) {
         if (dev_element_sub[iter].getAttribute("data-group_type")=="props") {
             props=iter;
         } else if (dev_element_sub[iter].getAttribute("data-group_type")=="ports") {

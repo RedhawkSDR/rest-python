@@ -144,14 +144,12 @@ def retrieveAppInfo(domainname, appName):
 def launchApp(domainname, appName):
     global domMgr_ptr
     ret_dict=[]
-    print 'attempting to create',appName
     try:
         app = domMgr_ptr.createApplication(str(appName))
         ret_dict.append({'appName':app.name})
     except Exception, e:
         ret_dict.append({'error':e})
     ret_dict_full = {'app':ret_dict}
-    print ret_dict_full
     msg_json = createJsonMsg(ret_dict_full)
     return msg_json
 
