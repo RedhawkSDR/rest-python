@@ -84,6 +84,13 @@ class LaunchApplication(tornado.web.RequestHandler):
         return_value = json.dumps(resp)
         self.write(return_value)
 
+class ReleaseApplication(tornado.web.RequestHandler):
+    def get(self, domainname):
+        appid = self.get_argument("waveform")
+        resp=domain.releaseApp(domainname,appid)
+        return_value = json.dumps(resp)
+        self.write(return_value)
+
 class Device(tornado.web.RequestHandler):
     def get(self, domainname, devmgrname, devname):
         resp=domain.retrieveDevInfo(domainname,devmgrname,devname)
@@ -108,6 +115,7 @@ application = tornado.web.Application([
     (r"/domain/([^/]+/applications/)", Applications),
     (r"/domain/([^/]+)/applications/([^/]+)", Application),
     (r"/domain/([^/]+)/launch_app", LaunchApplication),
+    (r"/domain/([^/]+)/release_app", ReleaseApplication),
     (r"/domain/([^/]+)/applications/([^/]+)/([^/]+)", Component),
     (r"/domain/([^/]+/devicemanagers/)", DeviceManagers),
     (r"/domain/([^/]+)/devicemanagers/([^/]+)", DeviceManager),
@@ -119,6 +127,6 @@ application = tornado.web.Application([
 domain.initialize(application)
 
 if __name__ == '__main__':
-    application.listen(5000)
+    application.listen(8080)
     tornado.ioloop.IOLoop.instance().start()
     

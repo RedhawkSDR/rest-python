@@ -93,6 +93,12 @@ function launchApp(app_name, callback)
     $.getJSON(app_url, callback)
 }
 
+function releaseApp(app_id, callback)
+{
+    var app_url = document.URL+"/release_app?waveform="+app_id;
+    $.getJSON(app_url, callback)
+}
+
 function retrieveDomMgr(callback)
 {
     var dommgrinfo_url = document.URL+"/info/";
@@ -124,7 +130,7 @@ function cycleSource()
 function DevMgrChange(object)
 {
     var eMgr = new EventMgr(object);
-    var ws = new WebSocket("ws://" + document.domain + ":5000/odmEvents");
+    var ws = new WebSocket("ws://" + document.domain + ":8080/odmEvents");
     ws.onmessage = function(msg) {
         if (!msg)
             ws.close();

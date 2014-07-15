@@ -93,7 +93,11 @@ $("#dropdown-applications").on("shown.bs.dropdown", function(e) {
 $("#dropdown-applications").on("hidden.bs.dropdown", function(e) {
 });
 
+$(".panel-collapse_applications").on("shown.bs.collapse", function(e) {
+});
+
 $(".panel-collapse_applications").on("show.bs.collapse", function(e) {
+    //console.log(e.target.id.indexOf("comps"),e.target.id.length);
     if (e.target.id == "applications_acc") { // get device managers
         retrieveApps(function(data){
             var domain = JSON.parse(data);
@@ -101,6 +105,9 @@ $(".panel-collapse_applications").on("show.bs.collapse", function(e) {
             cleanAccordion(domain.applications,document.getElementById("applications_acc"),"name","name",appAccordion);
         });
     } else {
+        if ((e.target.id.indexOf("comps") > -1)&&(e.target.id.length-e.target.id.indexOf("comps")==5)) {
+            //console.log("it's the comps pulldown");
+        }
         var app_to_retrieve = getGroupingFromAccordion(e.target.id, document.getElementById("applications_acc").childNodes);
         if (app_to_retrieve[1] != '') { // is it an application?
             retrieveApp(app_to_retrieve[1], function(data) {
@@ -189,13 +196,13 @@ $(".panel-collapse_devMgrs").on("show.bs.collapse", function(e) {
     }
 });
 $(".panel-collapse_devMgrs").on("hidden.bs.collapse", function(e) {
-    console.log('hiding: '+e.target.id,e);
+    //console.log('hiding: '+e.target.id,e);
 });
 $(".panel-collapseSingleEntity").on("shown.bs.collapse", function(e) {
-    console.log('single entity showing: '+e.target.id,e);
+    //console.log('single entity showing: '+e.target.id,e);
 });
 $(".panel-collapseSingleEntity").on("hidden.bs.collapse", function(e) {
-    console.log('single entity hiding: '+e.target.id,e);
+    //console.log('single entity hiding: '+e.target.id,e);
 });
 </script>
   <script>
@@ -205,9 +212,6 @@ $(".panel-collapseSingleEntity").on("hidden.bs.collapse", function(e) {
         document.getElementById("deviceManagers_acc").appendChild(devmgr_element);
     }
     function DeviceManagerRemovedHandler(e) {
-        console.log('got a request to remove');
-        console.log(e.detail);
-        
         removeFromAccordion(document.getElementById("deviceManagers_acc"),e.detail.devMgrName);
     }
     function ApplicationAddedHandler(e) {

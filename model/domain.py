@@ -153,6 +153,21 @@ def launchApp(domainname, appName):
     msg_json = createJsonMsg(ret_dict_full)
     return msg_json
 
+def releaseApp(domainname, appId):
+    global domMgr_ptr
+    ret_dict=[{}]
+    try:
+        apps = domMgr_ptr.apps
+        for app in apps:
+            if app.name == appId:
+                app.releaseObject()
+                break
+    except Exception, e:
+        ret_dict.append({'error':e})
+    ret_dict_full = {'app':ret_dict}
+    msg_json = createJsonMsg(ret_dict_full)
+    return msg_json
+
 def retrieveDevInfo(domainname, devMgrName, devId):
     global domMgr_ptr
     for devMgr in domMgr_ptr.devMgrs:

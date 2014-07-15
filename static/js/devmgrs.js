@@ -78,19 +78,59 @@ function addToAccordion(json_msg,parent_element,item_id_key,item_name_key,addAcc
 
 function addSubstructure(object_array, attribute_name, parent_element,attribute_id,attribute_value)
 {
-    var struct = [];
-    for (var idx in object_array) {
-        if (typeof(object_array[idx][attribute_name]) == 'undefined') {
-            continue;
-        }
-        if ((attribute_id == "")&&(attribute_value == "undefined")) {
-            struct.push({prop_id:object_array[idx][attribute_name],prop_value:''})
-        } else {
-            struct.push({prop_id:object_array[idx][attribute_name][attribute_id],prop_value:object_array[idx][attribute_name][attribute_value]})
+    var child_iter = parent_element.childNodes;
+    var foundItem = false;
+    for (var child_idx=0; child_idx<child_iter.length; child_idx++) {
+        if (child_iter[child_idx].hasAttribute("data-table_id")) {
+            if (child_iter[child_idx].getAttribute("data-table_id") == attribute_name) {
+                foundItem = true;
+                break;
+            }
         }
     }
-    var table = createTable(struct);
-    parent_element.appendChild(table);
+    if (!foundItem) {
+        var struct = [];
+        for (var idx in object_array) {
+            if (typeof(object_array[idx][attribute_name]) == 'undefined') {
+                continue;
+            }
+            if ((attribute_id == "")&&(attribute_value == "undefined")) {
+                struct.push({prop_id:object_array[idx][attribute_name],prop_value:''})
+            } else {
+                struct.push({prop_id:object_array[idx][attribute_name][attribute_id],prop_value:object_array[idx][attribute_name][attribute_value]})
+            }
+        }
+        var table = createTable(struct,attribute_name);
+        parent_element.appendChild(table);
+    } else {
+        for (var idx in object_array) {
+            if (typeof(object_array[idx][attribute_name]) == 'undefined') {
+                continue;
+            }
+            var contained_data_id = "";
+            var contained_data = "";
+            if ((attribute_id == "")&&(attribute_value == "undefined")) {
+                contained_data_id = object_array[idx][attribute_name];
+            } else {
+                contained_data_id = object_array[idx][attribute_name][attribute_id];
+                contained_data = object_array[idx][attribute_name][attribute_value];
+            }
+            var sub_iter = child_iter[child_idx].childNodes;
+            for (var sub_idx=0;sub_idx<sub_iter.length;sub_idx++) {
+                if (sub_iter[sub_idx].hasAttribute("data-contained_data_id")) {
+                    if (sub_iter[sub_idx].getAttribute("data-contained_data_id") == contained_data_id) {
+                        var value_iter = sub_iter[sub_idx].childNodes;
+                        for (var value_idx=0;value_idx<value_iter.length;value_idx++) {
+                            if (hasClass(value_iter[value_idx], "val_col")) {
+                                value_iter[value_idx].innerHTML = contained_data
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 function cleanAccordion(json_msg,parent_element,item_id_key,item_name_key,addAccordion_callback)
@@ -115,7 +155,6 @@ function cleanAccordion(json_msg,parent_element,item_id_key,item_name_key,addAcc
 
 function removeFromAccordion(parent_element,attr_name)
 {
-    console.log('.....invoking remove');
     var sub_elements = parent_element.childNodes;
     for (i=0; i<sub_elements.length; i++) {
         if (sub_elements[i] instanceof HTMLDivElement) {
@@ -129,12 +168,26 @@ function removeFromAccordion(parent_element,attr_name)
     }
 }
 
+function releaseApplication(e)
+{
+    releaseApp(e.target.getAttribute("data-application_id"),function(data){
+        return false;
+        }
+    );
+}
+
 function appAccordion(group_id, child)
 {
     var modgroup_id = group_id.replace(/\./g,"_");
     var accordion = accordionElement(group_id, modgroup_id,3,"App","default","panel-collapseSingleEntity");
     accordion.a_1.innerHTML=child;
     
+    var releaseButton = document.createElement("button");
+    releaseButton.className = "btn btn-sm btn-default";
+    releaseButton.innerHTML = "Release application";
+    releaseButton.onclick = releaseApplication;
+    releaseButton.setAttribute("data-application_id",group_id);
+    accordion.div_5.appendChild(releaseButton);
     var sub_accordion_comps = accordionElement(group_id+"comps",modgroup_id+"comps",2,"comps","default","panel-collapseSingleEntity");
     sub_accordion_comps.a_1.innerHTML="Components";
     accordion.div_5.appendChild(sub_accordion_comps.div_1);
@@ -194,24 +247,31 @@ function domMgrRightClick(domMgr_element,menu_id)
     domMgr_element.appendChild(div_1);
 }
 
-function launchApplication()
-{
-    console.log('.............. launch application');
+function hasClass(element, cls) {
+    return (' ' + element.className + ' ').indexOf(' ' + cls + ' ') > -1;
 }
 
-function createTable(idvalues)
+function onBlursupport(e) {
+    console.log(e.target.innerHTML);
+}
+
+function createTable(idvalues, table_id)
 {
     var container = document.createElement("div");
+    container.setAttribute("data-table_id",table_id);
     for (idx=0;idx<idvalues.length;idx++) {
         var row_1 = document.createElement("div");
         row_1.className = "row offset-x1";
+        row_1.setAttribute("data-contained_data_id",idvalues[idx].prop_id);
         var col_1 = document.createElement("div");
-        col_1.className = "col-xs-6 col-md-4";
+        col_1.className = "col-xs-6 col-md-4 id_col";
         col_1.innerHTML=idvalues[idx].prop_id;
         var col_2 = document.createElement("div");
-        col_2.className = "col-xs-6 col-md-4";
+        col_2.className = "col-xs-6 col-md-4 val_col";
         col_2.contenteditable=true;
         col_2.innerHTML=idvalues[idx].prop_value;
+        col_2.contentEditable = "true"
+        col_2.onblur = onBlursupport;
         row_1.appendChild(col_1);
         row_1.appendChild(col_2);
         container.appendChild(row_1);
