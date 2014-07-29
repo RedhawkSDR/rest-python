@@ -44,6 +44,27 @@ class SingleDomainInfo(tornado.web.RequestHandler):
         return_value = json.dumps(resp)
         self.write(return_value)
 
+class DomainProps(tornado.web.RequestHandler):
+    def get(self, domainname):
+        resp=domain.retrieveDomMgrInfo(domainname)
+        ret_seq = []
+        print resp
+        items=eval(resp)['domMgr']
+        for item in items:
+            for entry in item:
+                if entry == 'prop':
+                    ret_seq.append(item[entry])
+                    break
+        ret_dict = {'props':ret_seq}
+        return_value = json.dumps(ret_dict)
+        self.write(return_value)
+
+class SingleDomainProp(tornado.web.RequestHandler):
+    def get(self, domainname, propname):
+        resp=domain.retrieveDomMgrInfo(domainname)
+        return_value = json.dumps(resp)
+        self.write(return_value)
+
 class DeviceManagers(tornado.web.RequestHandler):
     def get(self, domainname):
         dm=domainname.split('/')[0]
@@ -112,6 +133,8 @@ application = tornado.web.Application([
     (r"/domain/", Domain),
     (r"/domain/([^/]+)", SingleDomain),
     (r"/domain/([^/]+)/info/", SingleDomainInfo),
+    (r"/domain/([^/]+)/props/", DomainProps),
+    (r"/domain/([^/]+)/props/([^/]+)", SingleDomainProp),
     (r"/domain/([^/]+/applications/)", Applications),
     (r"/domain/([^/]+)/applications/([^/]+)", Application),
     (r"/domain/([^/]+)/launch_app", LaunchApplication),

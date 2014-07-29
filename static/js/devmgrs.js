@@ -1,64 +1,33 @@
-function devMgrAccordionHtml(group_id,item_id)
+
+var DomMgrView = AccordionView.extend({
+    show: function() {
+        console.log('show domain manager');
+    },
+    hide: function() {
+        console.log('hide show domain manager');
+    }
+});
+
+var PropsView = AccordionView.extend({
+    show: function() {
+        console.log('show properties');
+        retrieveDomMgr(function(data){
+            var domain_resp = JSON.parse(data);
+            //addSubstructure(domain_resp.domMgr, "prop", document.getElementById("DomainManagerprops"),"name","value")
+            var dommgrprops = $("#DomainManagerprops");
+            addSubstructure(domain_resp.domMgr, "prop", $("#DomainManagerprops"),"name","value")
+        });
+    },
+    hide: function() {
+        console.log('hide properties');
+    }
+});
+
+function domMgrAccordion(domMgr_element)
 {
-    document.write('\
-      <div class="panel-group" id="'+group_id+'">    \
-        <div class="panel panel-default">           \
-          <div class="panel-heading">               \
-            <h4 class="panel-title">                \
-              <a data-toggle="collapse" data-parent="#accordion" href="#'+item_id+'">item</a> \
-            </h4>   \
-          </div>    \
-          <div id="'+item_id+'" class="panel-collapse collapse">    \
-            <li><a href="#">bar</a></li>  \
-            <li><a href="#">Another action</a></li> \
-            <li><a href="#">Separated link</a></li> \
-          </div>    \
-        </div>  \
-      </div>    \
-    ');
-};
-
-function makeid()
-{
-    var text = "";
-    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-    for( var i=0; i < 10; i++ )
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-    return text;
-};
-
-function accordionElement(group_id, modgroup_id, level, group_type, color, classname)
-{
-    var rnd_id = makeid();
-    var div_1 = document.createElement("div");
-    div_1.id = rnd_id;
-    div_1.className = "panel-group";
-    div_1.setAttribute("data-group_id",group_id);
-    div_1.setAttribute("data-modgroup_id",modgroup_id);
-    div_1.setAttribute("data-group_type",group_type);
-    var div_2 = document.createElement("div");
-    div_2.className = "panel panel-"+color+" offset-x1";
-    div_1.appendChild(div_2);
-    var div_3 = document.createElement("div");
-    div_3.className = "panel-heading";
-    div_2.appendChild(div_3);
-    var h_1 = document.createElement("h"+level);
-    h_1.className = "panel-title";
-    div_3.appendChild(h_1);
-    var a_1 = document.createElement("a");
-    a_1.setAttribute("data-toggle", "collapse");
-    a_1.setAttribute("data-parent", "#accordion");
-    a_1.setAttribute("href", "#"+modgroup_id);
-    h_1.appendChild(a_1);
-    var div_5 = document.createElement("div");
-    div_5.id = modgroup_id;
-    div_5.setAttribute("data-redhawk_id", group_id);
-    div_5.className = classname+" collapse";
-    div_5.setAttribute("data-group_type",group_type);
-    div_2.appendChild(div_5);
-    return {div_1:div_1, a_1:a_1, div_5:div_5, div_3:div_3};
+    var accordion_props = new PropsView({group_id:"DomainManagerprops", modgroup_id:"DomainManagerprops",level:2,group_type:"props",
+        color:"default",classname:"panel-collapseSingleEntity",visible_text:"Properties"});
+    domMgr_element.append(accordion_props.render().el);
 };
 
 function addToAccordion(json_msg,parent_element,item_id_key,item_name_key,addAccordion_callback)
@@ -78,7 +47,9 @@ function addToAccordion(json_msg,parent_element,item_id_key,item_name_key,addAcc
 
 function addSubstructure(object_array, attribute_name, parent_element,attribute_id,attribute_value)
 {
-    var child_iter = parent_element.childNodes;
+    console.log('begin');
+    var par_el = parent_element[0];
+    var child_iter = par_el.childNodes;
     var foundItem = false;
     for (var child_idx=0; child_idx<child_iter.length; child_idx++) {
         if (child_iter[child_idx].hasAttribute("data-table_id")) {
@@ -100,8 +71,11 @@ function addSubstructure(object_array, attribute_name, parent_element,attribute_
                 struct.push({prop_id:object_array[idx][attribute_name][attribute_id],prop_value:object_array[idx][attribute_name][attribute_value]})
             }
         }
-        var table = createTable(struct,attribute_name);
-        parent_element.appendChild(table);
+        /*var table = createTable(struct,attribute_name);
+        parent_element.appendChild(table);*/
+        console.log('the length of the structure is: '+struct.length);
+        var table = new PropertiesView({idvalues:struct,table_id:attribute_name,object_url:document.URL});
+        parent_element.append(table.render().el);
     } else {
         for (var idx in object_array) {
             if (typeof(object_array[idx][attribute_name]) == 'undefined') {
@@ -180,49 +154,40 @@ function appAccordion(group_id, child)
 {
     var modgroup_id = group_id.replace(/\./g,"_");
     var accordion = accordionElement(group_id, modgroup_id,3,"App","default","panel-collapseSingleEntity");
-    accordion.a_1.innerHTML=child;
+    accordion.find("#group_anchor_"+modgroup_id).html(child);
     
-    var releaseButton = document.createElement("button");
-    releaseButton.className = "btn btn-sm btn-default";
-    releaseButton.innerHTML = "Release application";
+    var releaseButton = $('<button class="btn btn-sm btn-default" data-application_id="'+group_id+'"/>');
     releaseButton.onclick = releaseApplication;
-    releaseButton.setAttribute("data-application_id",group_id);
-    accordion.div_5.appendChild(releaseButton);
+    releaseButton.innerHTML = "Release application";
+    accordion.find("#"+modgroup_id).append(releaseButton);
     var sub_accordion_comps = accordionElement(group_id+"comps",modgroup_id+"comps",2,"comps","default","panel-collapseSingleEntity");
-    sub_accordion_comps.a_1.innerHTML="Components";
-    accordion.div_5.appendChild(sub_accordion_comps.div_1);
+    sub_accordion_comps.find("#group_anchor_"+modgroup_id+"comps").html("Components");
+    accordion.find("#"+modgroup_id).append(sub_accordion_comps);
     var sub_accordion_ports = accordionElement(group_id+"ports",modgroup_id+"ports",2,"ports","default","panel-collapseSingleEntity");
-    sub_accordion_ports.a_1.innerHTML="Ports";
-    accordion.div_5.appendChild(sub_accordion_ports.div_1);
+    sub_accordion_ports.find("#group_anchor_"+modgroup_id+"ports").html("Ports");
+    accordion.find("#"+modgroup_id).append(sub_accordion_ports);
     var sub_accordion_props = accordionElement(group_id+"props",modgroup_id+"props",2,"props","default","panel-collapseSingleEntity");
-    sub_accordion_props.a_1.innerHTML="Properties";
-    accordion.div_5.appendChild(sub_accordion_props.div_1);
-    return accordion.div_1;
+    sub_accordion_props.find("#group_anchor_"+modgroup_id+"props").html("Properties");
+    accordion.find("#"+modgroup_id).append(sub_accordion_props);
+    return accordion;
 };
 
 function devMgrAccordion(group_id, child)
 {
     var modgroup_id = group_id.replace(/\./g,"_");
     var accordion = accordionElement(group_id, modgroup_id,3,"devMgr","default","panel-collapseSingleEntity");
-    accordion.a_1.innerHTML=child;
+    accordion.find("#group_anchor_"+modgroup_id).html(child);
     
     var sub_accordion_devs = accordionElement(group_id+"devs",modgroup_id+"devs",2,"devs","default","panel-collapseSingleEntity");
-    sub_accordion_devs.a_1.innerHTML="Devices";
-    accordion.div_5.appendChild(sub_accordion_devs.div_1);
+    sub_accordion_devs.find("#group_anchor_"+modgroup_id+"devs").html("Devices");
+    accordion.find("#"+modgroup_id).appendChild(sub_accordion_devs);
     var sub_accordion_svcs = accordionElement(group_id+"svcs",modgroup_id+"svcs",2,"svcs","default","panel-collapseSingleEntity");
-    sub_accordion_svcs.a_1.innerHTML="Services";
-    accordion.div_5.appendChild(sub_accordion_svcs.div_1);
+    sub_accordion_svcs.find("#group_anchor_"+modgroup_id+"svcs").html("Services");
+    accordion.find("#"+modgroup_id).appendChild(sub_accordion_svcs);
     var sub_accordion_props = accordionElement(group_id+"props",modgroup_id+"props",2,"props","default","panel-collapseSingleEntity");
-    sub_accordion_props.a_1.innerHTML="Properties";
-    accordion.div_5.appendChild(sub_accordion_props.div_1);
-    return accordion.div_1;
-};
-
-function domMgrAccordion(domMgr_element)
-{
-    var accordion_props = accordionElement("DomainManagerprops","DomainManagerprops",2,"props","default","panel-collapseSingleEntity");
-    accordion_props.a_1.innerHTML="Properties";
-    domMgr_element.appendChild(accordion_props.div_1);
+    sub_accordion_props.find("#group_anchor_"+modgroup_id+"props").html("Properties");
+    accordion.find("#"+modgroup_id).appendChild(sub_accordion_props);
+    return accordion;
 };
 
 function domMgrRightClick(domMgr_element,menu_id)
@@ -251,47 +216,19 @@ function hasClass(element, cls) {
     return (' ' + element.className + ' ').indexOf(' ' + cls + ' ') > -1;
 }
 
-function onBlursupport(e) {
-    console.log(e.target.innerHTML);
-}
-
-function createTable(idvalues, table_id)
-{
-    var container = document.createElement("div");
-    container.setAttribute("data-table_id",table_id);
-    for (idx=0;idx<idvalues.length;idx++) {
-        var row_1 = document.createElement("div");
-        row_1.className = "row offset-x1";
-        row_1.setAttribute("data-contained_data_id",idvalues[idx].prop_id);
-        var col_1 = document.createElement("div");
-        col_1.className = "col-xs-6 col-md-4 id_col";
-        col_1.innerHTML=idvalues[idx].prop_id;
-        var col_2 = document.createElement("div");
-        col_2.className = "col-xs-6 col-md-4 val_col";
-        col_2.contenteditable=true;
-        col_2.innerHTML=idvalues[idx].prop_value;
-        col_2.contentEditable = "true"
-        col_2.onblur = onBlursupport;
-        row_1.appendChild(col_1);
-        row_1.appendChild(col_2);
-        container.appendChild(row_1);
-    }
-    return container;
-}
-
 function itemAccordion(group_id, child, item_type)
 {
     var modgroup_id = group_id.replace(/[\.:]/g,"_");
     var accordion = accordionElement(group_id, modgroup_id,2,item_type,"default","panel-collapseSingleEntity");
-    accordion.a_1.innerHTML=child;
+    accordion.find("#group_anchor_"+modgroup_id).html(child);
     
     var sub_accordion_props = accordionElement(group_id+"props",modgroup_id+"props",2,"props","default","panel-collapseSingleEntity");
-    sub_accordion_props.a_1.innerHTML="Properties";
-    accordion.div_5.appendChild(sub_accordion_props.div_1);
+    sub_accordion_props.find("#group_anchor_"+modgroup_id+"props").html("Properties");
+    accordion.find("#"+modgroup_id).appendChild(sub_accordion_props);
     var sub_accordion_ports = accordionElement(group_id+"ports",modgroup_id+"ports",2,"ports","default","panel-collapseSingleEntity");
-    sub_accordion_ports.a_1.innerHTML="Ports";
-    accordion.div_5.appendChild(sub_accordion_ports.div_1);
-    return accordion.div_1;
+    sub_accordion_ports.find("#group_anchor_"+modgroup_id+"ports").html("Ports");
+    accordion.find("#"+modgroup_id).appendChild(sub_accordion_ports);
+    return accordion;
 }
 
 function isItemInAccordionDiv(item, div_iter) {
