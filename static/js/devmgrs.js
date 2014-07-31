@@ -8,14 +8,69 @@ var DomMgrView = AccordionView.extend({
     }
 });
 
-var PropsView = AccordionView.extend({
+var DomMgrPropsView = AccordionView.extend({
     show: function() {
         console.log('show properties');
         retrieveDomMgr(function(data){
             var domain_resp = JSON.parse(data);
-            //addSubstructure(domain_resp.domMgr, "prop", document.getElementById("DomainManagerprops"),"name","value")
             var dommgrprops = $("#DomainManagerprops");
-            addSubstructure(domain_resp.domMgr, "prop", $("#DomainManagerprops"),"name","value")
+            if ($("#DomainManagerprops_table").length == 0) {
+                var table = new PropertiesView({table_id:"DomainManagerprops_table",object_url:document.URL});
+                dommgrprops.append(table.render().el);
+            }
+        });
+    },
+    hide: function() {
+        console.log('hide properties');
+    }
+});
+
+var DevMgrPropsView = AccordionView.extend({
+    show: function() {
+        console.log('show properties');
+        retrieveDevMgr(function(data){
+            var domain_resp = JSON.parse(data);
+            var dommgrprops = $("#DomainManagerprops");
+            if ($("#DomainManagerprops_table").length == 0) {
+                var table = new PropertiesView({table_id:"DomainManagerprops_table",object_url:document.URL});
+                dommgrprops.append(table.render().el);
+            }
+        });
+    },
+    hide: function() {
+        console.log('hide properties');
+    }
+});
+
+var DevMgrDevsView = AccordionView.extend({
+    show: function() {
+        console.log('show devices');
+        var parent_obj = this;
+        retrieveDevMgr(this.group_id,function(data){
+            var devmgr_resp = JSON.parse(data);
+            var parent_element = $("#"+parent_obj.modgroup_id);
+            console.log(devmgr_resp);
+/*            if ($("#DomainManagerprops_table").length == 0) {
+                var table = new PropertiesView({table_id:"DomainManagerprops_table",object_url:document.URL});
+                dommgrprops.append(table.render().el);
+            }*/
+        });
+    },
+    hide: function() {
+        console.log('hide properties');
+    }
+});
+
+var DevMgrSvcsView = AccordionView.extend({
+    show: function() {
+        console.log('show properties');
+        retrieveDomMgr(function(data){
+            var domain_resp = JSON.parse(data);
+            var dommgrprops = $("#DomainManagerprops");
+            if ($("#DomainManagerprops_table").length == 0) {
+                var table = new PropertiesView({table_id:"DomainManagerprops_table",object_url:document.URL});
+                dommgrprops.append(table.render().el);
+            }
         });
     },
     hide: function() {
@@ -25,9 +80,38 @@ var PropsView = AccordionView.extend({
 
 function domMgrAccordion(domMgr_element)
 {
+    var accordion_props = new DomMgrPropsView({group_id:"DomainManagerprops", modgroup_id:"DomainManagerprops",level:2,group_type:"props",
+        color:"default",classname:"panel-collapseSingleEntity",visible_text:"Properties"});
+    domMgr_element.append(accordion_props.render().el);
+};
+
+function devMgrsAccordion(domMgr_element)
+{
+    var accordion_props = new DevsView({group_id:"DomainManagerprops", modgroup_id:"DomainManagerprops",level:2,group_type:"props",
+        color:"default",classname:"panel-collapseSingleEntity",visible_text:"Properties"});
+    var accordion_props = new SvcsView({group_id:"DomainManagerprops", modgroup_id:"DomainManagerprops",level:2,group_type:"props",
+        color:"default",classname:"panel-collapseSingleEntity",visible_text:"Properties"});
     var accordion_props = new PropsView({group_id:"DomainManagerprops", modgroup_id:"DomainManagerprops",level:2,group_type:"props",
         color:"default",classname:"panel-collapseSingleEntity",visible_text:"Properties"});
     domMgr_element.append(accordion_props.render().el);
+};
+
+function devMgrAccordion(group_id, child)
+{
+    var modgroup_id = group_id.replace(/\./g,"_");
+    var accordion = accordionElement(group_id, modgroup_id,3,"devMgr","default","panel-collapseSingleEntity");
+    accordion.find("#group_anchor_"+modgroup_id).html(child);
+    
+    var sub_accordion_devs = accordionElement(group_id+"devs",modgroup_id+"devs",2,"devs","default","panel-collapseSingleEntity");
+    sub_accordion_devs.find("#group_anchor_"+modgroup_id+"devs").html("Devices");
+    accordion.find("#"+modgroup_id).appendChild(sub_accordion_devs);
+    var sub_accordion_svcs = accordionElement(group_id+"svcs",modgroup_id+"svcs",2,"svcs","default","panel-collapseSingleEntity");
+    sub_accordion_svcs.find("#group_anchor_"+modgroup_id+"svcs").html("Services");
+    accordion.find("#"+modgroup_id).appendChild(sub_accordion_svcs);
+    var sub_accordion_props = accordionElement(group_id+"props",modgroup_id+"props",2,"props","default","panel-collapseSingleEntity");
+    sub_accordion_props.find("#group_anchor_"+modgroup_id+"props").html("Properties");
+    accordion.find("#"+modgroup_id).appendChild(sub_accordion_props);
+    return accordion;
 };
 
 function addToAccordion(json_msg,parent_element,item_id_key,item_name_key,addAccordion_callback)
@@ -74,7 +158,8 @@ function addSubstructure(object_array, attribute_name, parent_element,attribute_
         /*var table = createTable(struct,attribute_name);
         parent_element.appendChild(table);*/
         console.log('the length of the structure is: '+struct.length);
-        var table = new PropertiesView({idvalues:struct,table_id:attribute_name,object_url:document.URL});
+        //var table = new PropertiesView({idvalues:struct,table_id:attribute_name,object_url:document.URL});
+        var table = new PropertiesView({table_id:attribute_name,object_url:document.URL});
         parent_element.append(table.render().el);
     } else {
         for (var idx in object_array) {
@@ -169,24 +254,6 @@ function appAccordion(group_id, child)
     var sub_accordion_props = accordionElement(group_id+"props",modgroup_id+"props",2,"props","default","panel-collapseSingleEntity");
     sub_accordion_props.find("#group_anchor_"+modgroup_id+"props").html("Properties");
     accordion.find("#"+modgroup_id).append(sub_accordion_props);
-    return accordion;
-};
-
-function devMgrAccordion(group_id, child)
-{
-    var modgroup_id = group_id.replace(/\./g,"_");
-    var accordion = accordionElement(group_id, modgroup_id,3,"devMgr","default","panel-collapseSingleEntity");
-    accordion.find("#group_anchor_"+modgroup_id).html(child);
-    
-    var sub_accordion_devs = accordionElement(group_id+"devs",modgroup_id+"devs",2,"devs","default","panel-collapseSingleEntity");
-    sub_accordion_devs.find("#group_anchor_"+modgroup_id+"devs").html("Devices");
-    accordion.find("#"+modgroup_id).appendChild(sub_accordion_devs);
-    var sub_accordion_svcs = accordionElement(group_id+"svcs",modgroup_id+"svcs",2,"svcs","default","panel-collapseSingleEntity");
-    sub_accordion_svcs.find("#group_anchor_"+modgroup_id+"svcs").html("Services");
-    accordion.find("#"+modgroup_id).appendChild(sub_accordion_svcs);
-    var sub_accordion_props = accordionElement(group_id+"props",modgroup_id+"props",2,"props","default","panel-collapseSingleEntity");
-    sub_accordion_props.find("#group_anchor_"+modgroup_id+"props").html("Properties");
-    accordion.find("#"+modgroup_id).appendChild(sub_accordion_props);
     return accordion;
 };
 

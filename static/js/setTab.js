@@ -9,7 +9,7 @@ function setDomain(el, domain_name){
         color:"primary",classname:"panel-collapse_domainMgr",visible_text:"Domain Manager"});
     $('#domainTab',el).append(domainmanager_accordion.render().el);
     domMgrAccordion(domainmanager_accordion.widget.find("#domainManager_acc"));
-    var devicemanager_accordion = new AccordionView({group_id:"deviceManagers_acc", modgroup_id:"deviceManagers_acc",level:1,group_type:"devicemanagers",
+    var devicemanager_accordion = new DevMgrsView({group_id:"deviceManagers_acc", modgroup_id:"deviceManagers_acc",level:1,group_type:"devicemanagers",
         color:"primary",classname:"panel-collapse_devMgrs",visible_text:"Device Managers"});
     $('#domainTab',el).append(devicemanager_accordion.render().el);
     var applications_accordion = new AccordionView({group_id:"applications_acc", modgroup_id:"applications_acc",level:1,group_type:"applications",
