@@ -184,6 +184,17 @@ def retrieveDevInfo(domainname, devMgrName, devId):
                     return msg_json
     return '{}'
 
+def retrieveDevs(domainname, devMgrName):
+    global domMgr_ptr
+    for devMgr in domMgr_ptr.devMgrs:
+        if devMgr.name == devMgrName:
+            for dev in devMgr.devs:
+                ret_dict=[{'devName':dev.name}]
+                ret_dict.append({'devId':dev._id})
+                msg_json = createJsonMsg({'dev':ret_dict})
+                return msg_json
+    return '{}'
+
 def retrieveCompInfo(domainname, appName, compId):
     global domMgr_ptr
     for app in domMgr_ptr.apps:

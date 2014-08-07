@@ -30,7 +30,7 @@ function makeid()
 };
 
 function onBlursupport(e) { // blur is 'leaving focus' in html
-    console.log(e.target.innerHTML);
+    //console.log(e.target.innerHTML);
 }
 
 function accordionElement(group_id, modgroup_id, level, group_type, color, classname,visible_text)
@@ -96,14 +96,13 @@ var AccordionView = Backbone.View.extend({
     derived_initialize: function(options) {
     },
     show: function() {
-        console.log('show inside the view');
+        //console.log('show inside the view');
     },
     hide: function() {
-        console.log('hide inside the view');
+        //console.log('hide inside the view');
     },
 
     render: function(){
-        console.log('.......................... rendering',this.group_id);
         if (this.widget == null) {
             this.widget = accordionElement(this.group_id,this.modgroup_id,this.level,this.group_type,this.color,this.classname,this.visible_text);
             $(this.el).append(this.widget);
@@ -128,39 +127,33 @@ function createTable(idvalues, table_id)
     return container;
 };
 
-var DevMgrView = AccordionView.extend({
-    /*show: function(e) {
-        if (e.target.id != this.modgroup_id) {
-            return;
-        }
-        console.log('show device manager');
-        retrieveDevMgr(this.group_id, function(data){
-            var domain = JSON.parse(data);
-            console.log(domain);
-            for (var idx in domain.domain) {
-                console.log(domain.domain[idx]);
-            }
-            //addToAccordion(domain.domain,document.getElementById("deviceManagers_acc"),"devMgrName","devMgrName",devMgrAccordion);
-            //cleanAccordion(domain.domain,document.getElementById("deviceManagers_acc"),"devMgrName","devMgrName",devMgrAccordion);
-        });
-    },
-    hide: function(e) {
-        if (e.target.id != this.modgroup_id) {
-            return;
-        }
-        console.log('hide show device manager');
+var DeviceView = Backbone.View.extend({
+    /*events: {
     },*/
+    initialize: function(options){
+      this.widget = null;
+      _.bindAll(this, 'render'); // fixes loss of context for 'this' within methods
+
+      this.render(); // not all views are self-rendering. This one is.
+    },
+    updateView: function(value) {
+        console.log('------------ updating device view');
+        this.widget.html(parent_obj.model.val);
+    },
     render: function(){
+        if (this.model.auto_update) {
+            this.model.udpate(this.updateView);
+        }
         if (this.widget == null) {
             this.widget = accordionElement(this.group_id,this.modgroup_id,this.level,this.group_type,this.color,this.classname,this.visible_text);
             $(this.el).append(this.widget);
-            var accordion_props = new DevMgrDevsView({group_id:this.group_id+"devs", modgroup_id:this.modgroup_id+"devs",level:2,group_type:"devs",
+            /*var accordion_props = new DevMgrDevsView({group_id:this.group_id+"devs", modgroup_id:this.modgroup_id+"devs",level:2,group_type:"devs",
                 color:"default",classname:"panel-collapseSingleEntity",visible_text:"Devices"});
             this.widget.find("#"+this.modgroup_id).append(accordion_props.render().el);
             var accordion_props = new DevMgrSvcsView({group_id:this.group_id+"svcs", modgroup_id:this.modgroup_id+"svcs",level:2,group_type:"svcs",
                 color:"default",classname:"panel-collapseSingleEntity",visible_text:"Services"});
-            this.widget.find("#"+this.modgroup_id).append(accordion_props.render().el);
-            var accordion_props = new DevMgrPropsView({group_id:this.group_id+"props", modgroup_id:this.modgroup_id+"props",level:2,group_type:"props",
+            this.widget.find("#"+this.modgroup_id).append(accordion_props.render().el);*/
+            var accordion_props = new DevPropsView({group_id:this.group_id+"props", modgroup_id:this.modgroup_id+"props",level:2,group_type:"props",
                 color:"default",classname:"panel-collapseSingleEntity",visible_text:"Properties"});
             this.widget.find("#"+this.modgroup_id).append(accordion_props.render().el);
         }
@@ -168,21 +161,24 @@ var DevMgrView = AccordionView.extend({
     }
 });
 
-var DevMgrsView = AccordionView.extend({
+var DevMgrView = AccordionView.extend({
     derived_initialize: function(options) {
-        this.devMgrs = new DeviceManagerList();
-        this.listenTo(this.devMgrs,"update_view",this.updateView);
+        this.devMgr = options.devMgr;
+        this.listenTo(this.devMgr,"update_view",this.updateView);
     },
     updateView: function(ret_models) {
+        console.log('======================== responding to a message');
         devmgrs_el = $('#deviceManagers_acc');
         model_mod_ids = [];
+        console.log('ret_models',ret_models);
         _(ret_models).each(function(item){
+            console.log(item, item.id);
             var group_id = item.id;
-            var modgroup_id = group_id.replace(/\./g,"_");
+            var modgroup_id = item.id.replace(/\./g,"_");
             model_mod_ids.push(modgroup_id);
             if (($('#'+modgroup_id,this.widget)).length == 0) {
                 var devmgr = new DevMgrView({group_id:group_id, modgroup_id:modgroup_id,level:3,group_type:"devMgr",
-                    color:"default",classname:"panel-collapseSingleEntity",visible_text:group_id});
+                    color:"default",classname:"panel-collapseSingleEntity",visible_text:group_id,devMgr:item});
                 devmgrs_el.append(devmgr.render().el);
             }
         })
@@ -201,14 +197,118 @@ var DevMgrsView = AccordionView.extend({
         if (e.target.id != this.modgroup_id) {
             return;
         }
-        console.log('show device managers');
+        console.log('show device manager');
+        this.devMgr.update();
+    },
+    hide: function(e) {
+        if (e.target.id != this.modgroup_id) {
+            return;
+        }
+        console.log('hide show device manager');
+    },
+    render: function(){
+        if (this.widget == null) {
+            this.widget = accordionElement(this.group_id,this.modgroup_id,this.level,this.group_type,this.color,this.classname,this.visible_text);
+            $(this.el).append(this.widget);
+            var accordion_props = new DevMgrDevsView({group_id:this.group_id+"devs", modgroup_id:this.modgroup_id+"devs",level:2,group_type:"devs",
+                color:"default",classname:"panel-collapseSingleEntity",visible_text:"Devices",devMgr:this.devMgr});
+            this.widget.find("#"+this.modgroup_id).append(accordion_props.render().el);
+            var accordion_props = new DevMgrSvcsView({group_id:this.group_id+"svcs", modgroup_id:this.modgroup_id+"svcs",level:2,group_type:"svcs",
+                color:"default",classname:"panel-collapseSingleEntity",visible_text:"Services"});
+            this.widget.find("#"+this.modgroup_id).append(accordion_props.render().el);
+            var accordion_props = new DevMgrPropsView({group_id:this.group_id+"props", modgroup_id:this.modgroup_id+"props",level:2,group_type:"props",
+                color:"default",classname:"panel-collapseSingleEntity",visible_text:"Properties"});
+            this.widget.find("#"+this.modgroup_id).append(accordion_props.render().el);
+        }
+        return this;
+    }item.id
+});
+
+var DevMgrDevsView = AccordionView.extend({
+    derived_initialize: function(options) {
+        this.devs = new DeviceList();
+        this.devs.devMgr = options.devMgr;
+        this.listenTo(this.devs,"collection_update_view",this.updateView);
+    },
+    updateView: function(ret_models, devMgr_id) {
+        console.log('======================== updating device listing');
+        var devMgr_group_id = devMgr_id;
+        var devMgr_modgroup_id = devMgr_id.replace(/\./g,"_");
+        dev_el = $('#'+devMgr_modgroup_id);
+        //model_mod_ids = [];
+        console.log('ret_models',ret_models);
+        _(ret_models).each(function(item){
+            console.log(item, item.id);
+            var group_id = item.id;
+            var modgroup_id = group_id.replace(/\./g,"_");
+            model_mod_ids.push(modgroup_id);
+            if (($('#'+modgroup_id,this.widget)).length == 0) {
+                var devmgr = new DeviceView({group_id:group_id, modgroup_id:modgroup_id,level:3,group_type:"dev",
+                    color:"default",classname:"panel-collapseSingleEntity",visible_text:item.name});
+                dev_el.append(devmgr.render().el);
+            }
+        })
+    },
+    show: function(e) {
+        if (e.target.id != this.modgroup_id) {
+            return;
+        }
+        //console.log('show device managers');
+        this.devs.update();
+    },
+    hide: function(e) {
+        console.log('hide properties');
+    },
+    render: function(){
+        if (this.widget == null) {
+            this.widget = accordionElement(this.group_id,this.modgroup_id,this.level,this.group_type,this.color,this.classname,this.visible_text);
+            $(this.el).append(this.widget);
+        }
+        return this;
+    }
+});
+
+var DevMgrsView = AccordionView.extend({
+    derived_initialize: function(options) {
+        this.devMgrs = new DeviceManagerList();
+        this.listenTo(this.devMgrs,"collection_update_view",this.updateView);
+    },
+    updateView: function(ret_models) {
+        devmgrs_el = $('#deviceManagers_acc');
+        model_mod_ids = [];
+        _(ret_models).each(function(item){
+            var group_id = item.id;
+            var modgroup_id = group_id.replace(/\./g,"_");
+            model_mod_ids.push(modgroup_id);
+            if (($('#'+modgroup_id,this.widget)).length == 0) {
+                var devmgr = new DevMgrView({group_id:group_id, modgroup_id:modgroup_id,level:3,group_type:"devMgr",
+                    color:"default",classname:"panel-collapseSingleEntity",visible_text:group_id,devMgr:item});
+                devmgrs_el.append(devmgr.render().el);
+            }
+        })
+        el_to_remove = [];
+        _(devmgrs_el.children()).each(function(item_el){
+            if (item_el.childElementCount != 0) {
+                var modid = item_el.childNodes[0].getAttribute("data-modgroup_id");
+                if (_(model_mod_ids).find( function(devmgrid){return modid==devmgrid})==undefined){el_to_remove.push(modid)};
+            }
+        })
+        for (var idx in el_to_remove) {
+            $('#group_parent_'+el_to_remove[idx]).remove();
+        }
+    },
+    show: function(e) {
+        if (e.target.id != this.modgroup_id) {
+            return;
+        }
+        //console.log('show device managers');
         this.devMgrs.update();
     },
     hide: function(e) {
         if (e.target.id != this.modgroup_id) {
             return;
         }
-        console.log('hide show device managers');
+        //console.log('hide show device managers');
     }
 });
 
@@ -244,10 +344,10 @@ var PropertiesView = Backbone.View.extend({
         'hide.bs.collapse': 'hide'
     },
     show: function() {
-        console.log('show inside the table view');
+        //console.log('show inside the table view');
     },
     hide: function() {
-        console.log('hide inside the table view');
+        //console.log('hide inside the table view');
     },
     initialize: function(options){
       this.table_id = options.table_id;

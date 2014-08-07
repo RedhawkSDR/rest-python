@@ -25,6 +25,46 @@ var DomMgrPropsView = AccordionView.extend({
     }
 });
 
+/*var DevView = AccordionView.extend({
+    show: function() {
+        console.log('show properties');
+    },
+    hide: function() {
+        console.log('hide properties');
+    }
+});*/
+
+/*{
+    var modgroup_id = group_id.replace(/[\.:]/g,"_");
+    var accordion = accordionElement(group_id, modgroup_id,2,item_type,"default","panel-collapseSingleEntity");
+    accordion.find("#group_anchor_"+modgroup_id).html(child);
+    
+    var sub_accordion_props = accordionElement(group_id+"props",modgroup_id+"props",2,"props","default","panel-collapseSingleEntity");
+    sub_accordion_props.find("#group_anchor_"+modgroup_id+"props").html("Properties");
+    accordion.find("#"+modgroup_id).appendChild(sub_accordion_props);
+    var sub_accordion_ports = accordionElement(group_id+"ports",modgroup_id+"ports",2,"ports","default","panel-collapseSingleEntity");
+    sub_accordion_ports.find("#group_anchor_"+modgroup_id+"ports").html("Ports");
+    accordion.find("#"+modgroup_id).appendChild(sub_accordion_ports);
+    return accordion;
+}*/
+
+var DevPropsView = AccordionView.extend({
+    show: function() {
+        console.log('show properties');
+        /*retrieveDevMgr(function(data){
+            var domain_resp = JSON.parse(data);
+            var dommgrprops = $("#DomainManagerprops");
+            if ($("#DomainManagerprops_table").length == 0) {
+                var table = new PropertiesView({table_id:"DomainManagerprops_table",object_url:document.URL});
+                dommgrprops.append(table.render().el);
+            }
+        });*/
+    },
+    hide: function() {
+        console.log('hide properties');
+    }
+});
+
 var DevMgrPropsView = AccordionView.extend({
     show: function() {
         console.log('show properties');
@@ -42,24 +82,22 @@ var DevMgrPropsView = AccordionView.extend({
     }
 });
 
-var DevMgrDevsView = AccordionView.extend({
+/*var DevMgrDevsView = AccordionView.extend({
     show: function() {
         console.log('show devices');
         var parent_obj = this;
-        retrieveDevMgr(this.group_id,function(data){
+        var devmgr_id = this.group_id.substring(0,this.group_id.length-4);
+        console.log('devmgr id: ',devmgr_id);
+        retrieveDevs(devmgr_id,function(data){
             var devmgr_resp = JSON.parse(data);
             var parent_element = $("#"+parent_obj.modgroup_id);
             console.log(devmgr_resp);
-/*            if ($("#DomainManagerprops_table").length == 0) {
-                var table = new PropertiesView({table_id:"DomainManagerprops_table",object_url:document.URL});
-                dommgrprops.append(table.render().el);
-            }*/
         });
     },
     hide: function() {
         console.log('hide properties');
     }
-});
+});*/
 
 var DevMgrSvcsView = AccordionView.extend({
     show: function() {

@@ -118,6 +118,36 @@ class Device(tornado.web.RequestHandler):
         return_value = json.dumps(resp)
         self.write(return_value)
 
+class Service(tornado.web.RequestHandler):
+    def get(self, domainname, devmgrname, svcname):
+        resp=domain.retrieveSvcInfo(domainname,devmgrname,svcname)
+        return_value = json.dumps(resp)
+        self.write(return_value)
+
+class DevMgrProp(tornado.web.RequestHandler):
+    def get(self, domainname, devmgrname, propname):
+        resp=domain.retrieveDevMgrProp(domainname,devmgrname,propname)
+        return_value = json.dumps(resp)
+        self.write(return_value)
+
+class Devices(tornado.web.RequestHandler):
+    def get(self, domainname, devmgrname):
+        resp=domain.retrieveDevs(domainname,devmgrname)
+        return_value = json.dumps(resp)
+        self.write(return_value)
+
+class Services(tornado.web.RequestHandler):
+    def get(self, domainname, devmgrname):
+        resp=domain.retrieveSvcs(domainname,devmgrname,svcname)
+        return_value = json.dumps(resp)
+        self.write(return_value)
+
+class DevMgrProps(tornado.web.RequestHandler):
+    def get(self, domainname, devmgrname):
+        resp=domain.retrieveDevMgrProps(domainname,devmgrname,propname)
+        return_value = json.dumps(resp)
+        self.write(return_value)
+
 class Component(tornado.web.RequestHandler):
     def get(self, domainname, appname, compname):
         resp=domain.retrieveCompInfo(domainname,appname,compname)
@@ -142,7 +172,12 @@ application = tornado.web.Application([
     (r"/domain/([^/]+)/applications/([^/]+)/([^/]+)", Component),
     (r"/domain/([^/]+/devicemanagers/)", DeviceManagers),
     (r"/domain/([^/]+)/devicemanagers/([^/]+)", DeviceManager),
-    (r"/domain/([^/]+)/devicemanagers/([^/]+)/([^/]+)", Device),
+    (r"/domain/([^/]+)/devicemanagers/([^/]+)/devs/([^/]+)", Device),
+    (r"/domain/([^/]+)/devicemanagers/([^/]+)/devs/", Devices),
+    (r"/domain/([^/]+)/devicemanagers/([^/]+)/svcs/([^/]+)", Service),
+    (r"/domain/([^/]+)/devicemanagers/([^/]+)/svcs/", Services),
+    (r"/domain/([^/]+)/devicemanagers/([^/]+)/props/([^/]+)", DevMgrProp),
+    (r"/domain/([^/]+)/devicemanagers/([^/]+)/props/", DevMgrProps),
     (r"/domain/([^/]+/availableapps/)", AvailableApplications),
     (r"/odmEvents", OdmEvents),
 ])

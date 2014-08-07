@@ -81,6 +81,12 @@ function retrieveDevMgr(devmgr_id, callback)
     $.getJSON(devmgr_url, callback)
 }
 
+function retrieveDevs(devmgr_id, callback)
+{
+    var devs_url = document.URL+"/devicemanagers/"+devmgr_id+"/devs/";
+    $.getJSON(devs_url, callback)
+}
+
 function retrieveApp(app_id, callback)
 {
     var app_url = document.URL+"/applications/"+app_id;
