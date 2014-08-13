@@ -7,32 +7,16 @@ from model.domain import scan_domains
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
-# import threading
-
-
-# class OdmEvents(tornado.websocket.WebSocketHandler):
-#     def open(self):
-#         self.odmContainer = domain.odmStreamHandler(self)
-#         self._runThread = threading.Thread(target=self.odmContainer.thread_function)
-#         self._runThread.setDaemon(True)
-#         self._runThread.start()
-#
-#     def on_message(self, message):
-#         pass
-#
-#     def on_close(self):
-#         self.odmContainer.closeOdmStream()
-
-
-# class Main(tornado.web.RequestHandler):
-#     def get(self):
-#         self.redirect('/domain')
 
 
 class JsonHandler(tornado.web.RequestHandler):
     def _render_json(self, resp):
-        self.set_header("Content-Type", "application/json; charset='utf-8'")
-        self.write(resp)
+        if resp:
+            self.set_header("Content-Type", "application/json; charset='utf-8'")
+            self.write(resp)
+        else:
+            self.set_status(404)
+            self.finish({"error": "Unable to find requested resource"})
 
 
 class DomainInfo(JsonHandler):

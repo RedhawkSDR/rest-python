@@ -42,7 +42,7 @@ class Domain:
             for prop in props:
                 ret_dict.append({'prop': {"name": prop.id, "value": str(prop.value._v)}})
             return {'domMgr': ret_dict}
-        return {}
+        return None
 
     def apps(self):
         if self.domMgr_ptr is None:
@@ -64,7 +64,7 @@ class Domain:
                 for port in app.ports:
                     ret_dict.append({'port': port.name})
                 return {'app': ret_dict}
-        return {}
+        return None
 
     def comp_info(self, app_name, comp_id):
         for app in self.domMgr_ptr.apps:
@@ -77,7 +77,7 @@ class Domain:
                         for port in comp.ports:
                             ret_dict.append({'port': port.name})
                         return {'comp': ret_dict}
-        return {}
+        return None
 
     def launch(self, app_name):
         ret_dict = []
@@ -110,7 +110,7 @@ class Domain:
         sad_ret = []
         for idx in range(len(sads)):
             sad_ret.append({'name': sads[idx], 'sad': sads_full_path[idx]})
-        return {'availableApps':sad_ret}
+        return {'availableApps': sad_ret}
 
     def device_managers(self):
         if self.domMgr_ptr is None:
@@ -131,7 +131,7 @@ class Domain:
                 for svc in devMgr.services:
                     ret_dict.append({'svc': {"name": svc.name, "id": svc._id}})
                 return {'devMgr': ret_dict}
-        return {}
+        return None
 
     def devices(self, dev_mgr_name):
         for devMgr in self.domMgr_ptr.devMgrs:
@@ -142,7 +142,7 @@ class Domain:
                         {'devId': dev._id}
                     ]
                     return {'dev': ret_dict}
-        return {}
+        return None
 
     def device_info(self, dev_mgr_name, dev_id):
         for devMgr in self.domMgr_ptr.devMgrs:
@@ -155,4 +155,4 @@ class Domain:
                         for port in dev.ports:
                             ret_dict.append({'port': port.name})
                         return {'dev': ret_dict}
-        return {}
+        return None
