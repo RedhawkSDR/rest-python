@@ -2,32 +2,31 @@
 import os,sys
 cwd = os.getcwd()
 
-# from model import domain
-from model.mydomain import MyDomain
-from model.mydomain import scan_domains
+from model.domain import Domain
+from model.domain import scan_domains
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
-import threading
+# import threading
 
 
-class OdmEvents(tornado.websocket.WebSocketHandler):
-    def open(self):
-        self.odmContainer = domain.odmStreamHandler(self)
-        self._runThread = threading.Thread(target=self.odmContainer.thread_function)
-        self._runThread.setDaemon(True)
-        self._runThread.start()
+# class OdmEvents(tornado.websocket.WebSocketHandler):
+#     def open(self):
+#         self.odmContainer = domain.odmStreamHandler(self)
+#         self._runThread = threading.Thread(target=self.odmContainer.thread_function)
+#         self._runThread.setDaemon(True)
+#         self._runThread.start()
+#
+#     def on_message(self, message):
+#         pass
+#
+#     def on_close(self):
+#         self.odmContainer.closeOdmStream()
 
-    def on_message(self, message):
-        pass
 
-    def on_close(self):
-        self.odmContainer.closeOdmStream()
-
-
-class Main(tornado.web.RequestHandler):
-    def get(self):
-        self.redirect('/domain')
+# class Main(tornado.web.RequestHandler):
+#     def get(self):
+#         self.redirect('/domain')
 
 
 class JsonHandler(tornado.web.RequestHandler):
@@ -36,30 +35,19 @@ class JsonHandler(tornado.web.RequestHandler):
         self.write(resp)
 
 
-class Domain(JsonHandler):
+class DomainInfo(JsonHandler):
     def get(self, domain_name=None):
-        # if domain_name:
-        #     dom = MyDomain(str(domain_name))
-        #     info = dom.info()
-        # else:
-        #     info = {'domains': domain.scan_domains()}
-        # self._render_json(info)
-
-        domains = scan_domains()
-        if len(domains) == 1:
-            return self.redirect('/domain/'+domains[0])
-        return 'Select the domain:'+str(domains)
-
-
-class SingleDomain(tornado.web.RequestHandler):
-    def get(self, domain_name):
-        # domain.connectToDomain(domain_name)
-        return self.render('templates/domain.html', name=domain_name)
+        if domain_name:
+            dom = Domain(str(domain_name))
+            info = dom.info()
+        else:
+            info = {'domains': scan_domains()}
+        self._render_json(info)
 
 
 class DomainProps(JsonHandler):
     def get(self, domain_name, prop_name=None):
-        dom = MyDomain(str(domain_name))
+        dom = Domain(str(domain_name))
         info = dom.info()
 
         if prop_name:
@@ -86,7 +74,7 @@ class DomainProps(JsonHandler):
 
 class DeviceManagers(JsonHandler):
     def get(self, domain_name, dev_mgr_name=None):
-        dom = MyDomain(str(domain_name))
+        dom = Domain(str(domain_name))
 
         if dev_mgr_name:
             info = dom.device_manager_info(dev_mgr_name)
@@ -98,7 +86,7 @@ class DeviceManagers(JsonHandler):
 
 class Applications(JsonHandler):
     def get(self, domain_name, app_id=None):
-        dom = MyDomain(str(domain_name))
+        dom = Domain(str(domain_name))
 
         if app_id:
             info = dom.app_info(app_id)
@@ -110,7 +98,7 @@ class Applications(JsonHandler):
 
 class AvailableApplications(JsonHandler):
     def get(self, domain_name):
-        dom = MyDomain(str(domain_name))
+        dom = Domain(str(domain_name))
         apps = dom.available_apps()
 
         self._render_json(apps)
@@ -119,7 +107,7 @@ class AvailableApplications(JsonHandler):
 class LaunchApplication(JsonHandler):
     def get(self, domain_name):
         app_name = self.get_argument("waveform")
-        dom = MyDomain(str(domain_name))
+        dom = Domain(str(domain_name))
         info = dom.launch(app_name)
 
         self._render_json(info)
@@ -128,30 +116,15 @@ class LaunchApplication(JsonHandler):
 class ReleaseApplication(JsonHandler):
     def get(self, domain_name):
         app_id = self.get_argument("waveform")
-        dom = MyDomain(str(domain_name))
+        dom = Domain(str(domain_name))
         info = dom.release(app_id)
 
         self._render_json(info)
 
-# class Service(tornado.web.RequestHandler):
-#     def get(self, domainname, devmgrname, svcname):
-#         resp=domain.retrieveSvcInfo(domainname,devmgrname,svcname)
-#
-#         self.set_header("Content-Type", "application/json; charset='utf-8'")
-#         self.write(resp)
-#
-#
-# class DevMgrProp(tornado.web.RequestHandler):
-#     def get(self, domainname, devmgrname, propname):
-#         resp=domain.retrieveDevMgrProp(domainname,devmgrname,propname)
-#
-#         self.set_header("Content-Type", "application/json; charset='utf-8'")
-#         self.write(resp)
-
 
 class Devices(JsonHandler):
     def get(self, domain_name, dev_mgr_name, dev_id=None):
-        dom = MyDomain(str(domain_name))
+        dom = Domain(str(domain_name))
 
         if dev_id:
             info = dom.device_info(dev_mgr_name, dev_id)
@@ -160,36 +133,21 @@ class Devices(JsonHandler):
 
         self._render_json(info)
 
-# class Services(tornado.web.RequestHandler):
-#     def get(self, domainname, devmgrname):
-#         resp=domain.retrieveSvcs(domainname,devmgrname,svcname)
-#
-#         self.set_header("Content-Type", "application/json; charset='utf-8'")
-#         self.write(resp)
-#
-#
-# class DevMgrProps(tornado.web.RequestHandler):
-#     def get(self, domainname, devmgrname):
-#         resp=domain.retrieveDevMgrProps(domainname,devmgrname,propname)
-#
-#         self.set_header("Content-Type", "application/json; charset='utf-8'")
-#         self.write(resp)
-
 
 class Component(JsonHandler):
     def get(self, domain_name, app_id, comp_id):
-        dom = MyDomain(str(domain_name))
+        dom = Domain(str(domain_name))
         info = dom.comp_info(app_id, comp_id)
 
         self._render_json(info)
 
 
 application = tornado.web.Application([
-    (r"/", Main),
+    (r"/", DomainInfo),
     (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": cwd+"/static"}),
-    (r"/domain/?", Domain),
-    (r"/domain/([^/]+)/?", SingleDomain),
-    (r"/domain/([^/]+)/info/?", Domain),
+    (r"/domain/?", DomainInfo),
+    (r"/domain/([^/]+)/?", DomainInfo),
+    (r"/domain/([^/]+)/info/?", DomainInfo),
     (r"/domain/([^/]+)/props/?", DomainProps),
     (r"/domain/([^/]+)/props/([^/]+)", DomainProps),
     (r"/domain/([^/]+)/applications/?", Applications),
@@ -199,17 +157,10 @@ application = tornado.web.Application([
     (r"/domain/([^/]+)/applications/([^/]+)/([^/]+)", Component),
     (r"/domain/([^/]+)/devicemanagers/?", DeviceManagers),
     (r"/domain/([^/]+)/devicemanagers/([^/]+)", DeviceManagers),
-    (r"/domain/([^/]+)/devicemanagers/([^/]+)/devs/([^/]+)", Devices),
     (r"/domain/([^/]+)/devicemanagers/([^/]+)/devs/?", Devices),
-    # (r"/domain/([^/]+)/devicemanagers/([^/]+)/svcs/([^/]+)", Service),
-    # (r"/domain/([^/]+)/devicemanagers/([^/]+)/svcs/?", Services),
-    # (r"/domain/([^/]+)/devicemanagers/([^/]+)/props/([^/]+)", DevMgrProp),
-    # (r"/domain/([^/]+)/devicemanagers/([^/]+)/props/?", DevMgrProps),
-    (r"/domain/([^/]+)/availableapps/?", AvailableApplications),
-    (r"/odmEvents", OdmEvents),
+    (r"/domain/([^/]+)/devicemanagers/([^/]+)/devs/([^/]+)", Devices),
+    (r"/domain/([^/]+)/availableapps/?", AvailableApplications)
 ])
-
-# domain.initialize(application)
 
 if __name__ == '__main__':
     application.listen(8080)
