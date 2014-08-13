@@ -30,9 +30,9 @@ class Main(tornado.web.RequestHandler):
 class Domain(tornado.web.RequestHandler):
     def get(self):
         domains = domain.scan_domains()
-        if len(domains) == 1:
-            return self.redirect('/domain/'+domains[0])
-        return 'Select the domain:'+str(domains)
+
+        self.set_header("Content-Type", "application/json; charset='utf-8'")
+        self.write({'domains': domains})
 
 class SingleDomain(tornado.web.RequestHandler):
     def get(self, domainname):
@@ -41,15 +41,16 @@ class SingleDomain(tornado.web.RequestHandler):
 
 class SingleDomainInfo(tornado.web.RequestHandler):
     def get(self, domainname):
+        domain.connectToDomain(domainname)
         resp=domain.retrieveDomMgrInfo(domainname)
-        return_value = json.dumps(resp)
-        self.write(return_value)
+
+        self.set_header("Content-Type", "application/json; charset='utf-8'")
+        self.write(resp)
 
 class DomainProps(tornado.web.RequestHandler):
     def get(self, domainname):
         resp=domain.retrieveDomMgrInfo(domainname)
         ret_seq = []
-        print resp
         items=eval(resp)['domMgr']
         for item in items:
             for entry in item:
@@ -63,79 +64,93 @@ class DomainProps(tornado.web.RequestHandler):
 class SingleDomainProp(tornado.web.RequestHandler):
     def get(self, domainname, propname):
         resp=domain.retrieveDomMgrInfo(domainname)
-        return_value = json.dumps(resp)
-        self.write(return_value)
+        self.set_header("Content-Type", "application/json; charset='utf-8'")
+        self.write(resp)
 
 class DeviceManagers(tornado.web.RequestHandler):
     def get(self, domainname):
-        dm=domainname.split('/')[0]
+        dm=domainname
         json_msg=domain.retrieveDevMgrs(dm)
-        return_value = json.dumps(json_msg)
-        self.write(return_value)
+
+        self.set_header("Content-Type", "application/json; charset='utf-8'")
+        self.write(json_msg)
 
 class Applications(tornado.web.RequestHandler):
-    def get(self, domainname):
-        dm=domainname.split('/')[0]
-        json_msg=domain.retrieveApps(dm)
-        return_value = json.dumps(json_msg)
-        self.write(return_value)
+    def get(self, domain_name):
+        json_msg=domain.retrieveApps(domain_name)
+
+        self.set_header("Content-Type", "application/json; charset='utf-8'")
+        self.write(json_msg)
 
 class AvailableApplications(tornado.web.RequestHandler):
     def get(self, domainname):
-        dm=domainname.split('/')[0]
-        json_msg=domain.retrieveAvailableApps(dm)
-        return_value = json.dumps(json_msg)
-        self.write(return_value)
+        json_msg=domain.retrieveAvailableApps(domainname)
+
+        self.set_header("Content-Type", "application/json; charset='utf-8'")
+        self.write(json_msg)
 
 class DeviceManager(tornado.web.RequestHandler):
     def get(self, domainname, devmgrname):
         resp=domain.retrieveDevMgrInfo(domainname,devmgrname)
-        return_value = json.dumps(resp)
-        self.write(return_value)
+
+        self.set_header("Content-Type", "application/json; charset='utf-8'")
+        self.write(resp)
 
 class Application(tornado.web.RequestHandler):
     def get(self, domainname, appname):
-        resp=domain.retrieveAppInfo(domainname,appname)
-        return_value = json.dumps(resp)
-        self.write(return_value)
+        resp = domain.retrieveAppInfo(domainname, appname)
+
+        self.set_header("Content-Type", "application/json; charset='utf-8'")
+        self.write(resp)
+
 
 class LaunchApplication(tornado.web.RequestHandler):
     def get(self, domainname):
         appname = self.get_argument("waveform")
         resp=domain.launchApp(domainname,appname)
-        return_value = json.dumps(resp)
-        self.write(return_value)
+
+        self.set_header("Content-Type", "application/json; charset='utf-8'")
+        self.write(resp)
+
 
 class ReleaseApplication(tornado.web.RequestHandler):
     def get(self, domainname):
         appid = self.get_argument("waveform")
         resp=domain.releaseApp(domainname,appid)
-        return_value = json.dumps(resp)
-        self.write(return_value)
+
+        self.set_header("Content-Type", "application/json; charset='utf-8'")
+        self.write(resp)
+
 
 class Device(tornado.web.RequestHandler):
     def get(self, domainname, devmgrname, devname):
         resp=domain.retrieveDevInfo(domainname,devmgrname,devname)
-        return_value = json.dumps(resp)
-        self.write(return_value)
+
+        self.set_header("Content-Type", "application/json; charset='utf-8'")
+        self.write(resp)
 
 class Service(tornado.web.RequestHandler):
     def get(self, domainname, devmgrname, svcname):
         resp=domain.retrieveSvcInfo(domainname,devmgrname,svcname)
-        return_value = json.dumps(resp)
-        self.write(return_value)
+
+        self.set_header("Content-Type", "application/json; charset='utf-8'")
+        self.write(resp)
+
 
 class DevMgrProp(tornado.web.RequestHandler):
     def get(self, domainname, devmgrname, propname):
         resp=domain.retrieveDevMgrProp(domainname,devmgrname,propname)
-        return_value = json.dumps(resp)
-        self.write(return_value)
+
+        self.set_header("Content-Type", "application/json; charset='utf-8'")
+        self.write(resp)
+
 
 class Devices(tornado.web.RequestHandler):
     def get(self, domainname, devmgrname):
-        resp=domain.retrieveDevs(domainname,devmgrname)
-        return_value = json.dumps(resp)
-        self.write(return_value)
+        resp=domain.retrieveDevs(domainname, devmgrname)
+
+        self.set_header("Content-Type", "application/json; charset='utf-8'")
+        self.write(resp)
 
 class Services(tornado.web.RequestHandler):
     def get(self, domainname, devmgrname):
@@ -161,24 +176,24 @@ application = tornado.web.Application([
     (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": cwd+"/static"}),
     (r"/domain", Domain),
     (r"/domain/", Domain),
-    (r"/domain/([^/]+)", SingleDomain),
-    (r"/domain/([^/]+)/info/", SingleDomainInfo),
-    (r"/domain/([^/]+)/props/", DomainProps),
+    (r"/domain/([^/]+)/?", SingleDomainInfo),
+    (r"/domain/([^/]+)/info/?", SingleDomainInfo),
+    (r"/domain/([^/]+)/props/?", DomainProps),
     (r"/domain/([^/]+)/props/([^/]+)", SingleDomainProp),
-    (r"/domain/([^/]+/applications/)", Applications),
+    (r"/domain/([^/]+)/applications/?", Applications),
     (r"/domain/([^/]+)/applications/([^/]+)", Application),
     (r"/domain/([^/]+)/launch_app", LaunchApplication),
     (r"/domain/([^/]+)/release_app", ReleaseApplication),
     (r"/domain/([^/]+)/applications/([^/]+)/([^/]+)", Component),
-    (r"/domain/([^/]+/devicemanagers/)", DeviceManagers),
+    (r"/domain/([^/]+)/devicemanagers/?", DeviceManagers),
     (r"/domain/([^/]+)/devicemanagers/([^/]+)", DeviceManager),
     (r"/domain/([^/]+)/devicemanagers/([^/]+)/devs/([^/]+)", Device),
-    (r"/domain/([^/]+)/devicemanagers/([^/]+)/devs/", Devices),
+    (r"/domain/([^/]+)/devicemanagers/([^/]+)/devs/?", Devices),
     (r"/domain/([^/]+)/devicemanagers/([^/]+)/svcs/([^/]+)", Service),
-    (r"/domain/([^/]+)/devicemanagers/([^/]+)/svcs/", Services),
+    (r"/domain/([^/]+)/devicemanagers/([^/]+)/svcs/?", Services),
     (r"/domain/([^/]+)/devicemanagers/([^/]+)/props/([^/]+)", DevMgrProp),
-    (r"/domain/([^/]+)/devicemanagers/([^/]+)/props/", DevMgrProps),
-    (r"/domain/([^/]+/availableapps/)", AvailableApplications),
+    (r"/domain/([^/]+)/devicemanagers/([^/]+)/props/?", DevMgrProps),
+    (r"/domain/([^/]+)/availableapps/?", AvailableApplications),
     (r"/odmEvents", OdmEvents),
 ])
 

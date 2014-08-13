@@ -221,7 +221,7 @@ def retrieveDevMgrs(domainname):
     devmgrs_dict = []
     for devmgr in devmgrs:
         devmgrs_dict.append({'devMgrName':devmgr.name})
-    msg_json = createJsonMsg({'domain':devmgrs_dict})
+    msg_json = createJsonMsg({'deviceManagers':devmgrs_dict})
     return msg_json
 
 def retrieveApps(domainname):
@@ -254,6 +254,7 @@ def retrieveAvailableApps(domainname):
 def retrieveDomMgrInfo(domainname):
     global domMgr_ptr
     domain_name = str(domainname)
+    connectToDomain(domainname)
     if domain_name == domMgr_ptr.ref._get_name():
         ret_dict=[{'domMgrName':domain_name}]
         props = domMgr_ptr.query([])
