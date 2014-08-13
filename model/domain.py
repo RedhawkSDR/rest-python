@@ -50,8 +50,8 @@ class Domain:
         apps = self.domMgr_ptr.apps
         apps_dict = []
         for app in apps:
-            apps_dict.append({'name': app.name})
-        return {'applications': apps_dict}
+            apps_dict.append(app.name)
+        return {'waveforms': apps_dict}
 
     def app_info(self, app_name):
         for app in self.domMgr_ptr.apps:
@@ -80,27 +80,28 @@ class Domain:
         return None
 
     def launch(self, app_name):
-        ret_dict = []
+        ret_dict = {}
         try:
             app = self.domMgr_ptr.createApplication(str(app_name))
-            ret_dict.append({'appName': app.name})
+            ret_dict['launched'] = app.name
         except Exception, e:
-            ret_dict.append({'error': e})
-        ret_dict_full = {'app': ret_dict}
-        return ret_dict_full
+            ret_dict['error'] = e
+        ret_dict.update(self.apps())
+        return ret_dict
 
     def release(self, app_id):
-        ret_dict = [{}]
+        ret_dict = {}
         try:
             apps = self.domMgr_ptr.apps
             for app in apps:
                 if app.name == app_id:
                     app.releaseObject()
+                    ret_dict['released'] = app.name
                     break
         except Exception, e:
-            ret_dict.append({'error': e})
-        ret_dict_full = {'app': ret_dict}
-        return ret_dict_full
+            ret_dict['error'] = e
+        ret_dict.update(self.apps())
+        return ret_dict
 
     def available_apps(self):
         if self.domMgr_ptr is None:

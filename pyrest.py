@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import json
 import os,sys
 cwd = os.getcwd()
 
@@ -15,8 +16,11 @@ class JsonHandler(tornado.web.RequestHandler):
             self.set_header("Content-Type", "application/json; charset='utf-8'")
             self.write(resp)
         else:
-            self.set_status(404)
-            self.finish({"error": "Unable to find requested resource"})
+            self._render_error("Unable to find requested resource", 404)
+
+    def _render_error(self, msg, status=500):
+        self.set_status(status)
+        self.finish({"error": msg})
 
 
 class DomainInfo(JsonHandler):
@@ -68,7 +72,7 @@ class DeviceManagers(JsonHandler):
         self._render_json(info)
 
 
-class Applications(JsonHandler):
+class Waveforms(JsonHandler):
     def get(self, domain_name, app_id=None):
         dom = Domain(str(domain_name))
 
@@ -79,31 +83,31 @@ class Applications(JsonHandler):
 
         self._render_json(info)
 
+    def post(self, domain_name):
+        data = json.loads(self.request.body)
+        if 'name' in data:
+            app_name = data['name']
 
-class AvailableApplications(JsonHandler):
+            dom = Domain(str(domain_name))
+            info = dom.launch(app_name)
+
+            self._render_json(info)
+        else:
+            self._render_error("Request is missing 'name' value", 500)
+
+    def delete(self, domain_name, app_id):
+        dom = Domain(str(domain_name))
+        info = dom.release(app_id)
+
+        self._render_json(info)
+
+
+class WaveformsAvailable(JsonHandler):
     def get(self, domain_name):
         dom = Domain(str(domain_name))
         apps = dom.available_apps()
 
         self._render_json(apps)
-
-
-class LaunchApplication(JsonHandler):
-    def get(self, domain_name):
-        app_name = self.get_argument("waveform")
-        dom = Domain(str(domain_name))
-        info = dom.launch(app_name)
-
-        self._render_json(info)
-
-
-class ReleaseApplication(JsonHandler):
-    def get(self, domain_name):
-        app_id = self.get_argument("waveform")
-        dom = Domain(str(domain_name))
-        info = dom.release(app_id)
-
-        self._render_json(info)
 
 
 class Devices(JsonHandler):
@@ -127,23 +131,26 @@ class Component(JsonHandler):
 
 
 application = tornado.web.Application([
-    (r"/", DomainInfo),
     (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": cwd+"/static"}),
-    (r"/domain/?", DomainInfo),
-    (r"/domain/([^/]+)/?", DomainInfo),
-    (r"/domain/([^/]+)/info/?", DomainInfo),
-    (r"/domain/([^/]+)/props/?", DomainProps),
-    (r"/domain/([^/]+)/props/([^/]+)", DomainProps),
-    (r"/domain/([^/]+)/applications/?", Applications),
-    (r"/domain/([^/]+)/applications/([^/]+)", Applications),
-    (r"/domain/([^/]+)/launch_app", LaunchApplication),
-    (r"/domain/([^/]+)/release_app", ReleaseApplication),
-    (r"/domain/([^/]+)/applications/([^/]+)/([^/]+)", Component),
-    (r"/domain/([^/]+)/devicemanagers/?", DeviceManagers),
-    (r"/domain/([^/]+)/devicemanagers/([^/]+)", DeviceManagers),
-    (r"/domain/([^/]+)/devicemanagers/([^/]+)/devs/?", Devices),
-    (r"/domain/([^/]+)/devicemanagers/([^/]+)/devs/([^/]+)", Devices),
-    (r"/domain/([^/]+)/availableapps/?", AvailableApplications)
+
+    (r"/domains/?", DomainInfo),
+    (r"/domains/([^/]+)/?", DomainInfo),
+
+    (r"/domains/([^/]+)/properties/?", DomainProps),
+    (r"/domains/([^/]+)/properties/([^/]+)", DomainProps),
+
+    (r"/domains/([^/]+)/waveforms/?", Waveforms),
+    (r"/domains/([^/]+)/waveforms/available/?", WaveformsAvailable),
+
+    (r"/domains/([^/]+)/waveforms/([^/]+)", Waveforms),
+
+    (r"/domains/([^/]+)/waveforms/([^/]+)/components/([^/]+)", Component),
+
+    (r"/domains/([^/]+)/devicemanagers/?", DeviceManagers),
+    (r"/domains/([^/]+)/devicemanagers/([^/]+)", DeviceManagers),
+
+    (r"/domains/([^/]+)/devicemanagers/([^/]+)/devices/?", Devices),
+    (r"/domains/([^/]+)/devicemanagers/([^/]+)/devices/([^/]+)", Devices)
 ])
 
 if __name__ == '__main__':
