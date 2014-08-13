@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os,sys
 cwd = os.getcwd()
+print cwd
 
 from model import domain
 import tornado.ioloop
@@ -157,8 +158,7 @@ class Component(tornado.web.RequestHandler):
 
 application = tornado.web.Application([
     (r"/", Main),
-    (r"/(.*\.css)", tornado.web.StaticFileHandler,{"path":cwd}),
-    (r"/(.*\.js)", tornado.web.StaticFileHandler,{"path":cwd}),
+    (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": cwd+"/static"}),
     (r"/domain", Domain),
     (r"/domain/", Domain),
     (r"/domain/([^/]+)", SingleDomain),

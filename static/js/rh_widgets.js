@@ -142,7 +142,7 @@ var DeviceView = Backbone.View.extend({
     },
     render: function(){
         if (this.model.auto_update) {
-            this.model.udpate(this.updateView);
+            this.model.update(this.updateView);
         }
         if (this.widget == null) {
             this.widget = accordionElement(this.group_id,this.modgroup_id,this.level,this.group_type,this.color,this.classname,this.visible_text);
@@ -181,14 +181,14 @@ var DevMgrView = AccordionView.extend({
                     color:"default",classname:"panel-collapseSingleEntity",visible_text:group_id,devMgr:item});
                 devmgrs_el.append(devmgr.render().el);
             }
-        })
+        });
         el_to_remove = [];
         _(devmgrs_el.children()).each(function(item_el){
             if (item_el.childElementCount != 0) {
                 var modid = item_el.childNodes[0].getAttribute("data-modgroup_id");
                 if (_(model_mod_ids).find( function(devmgrid){return modid==devmgrid})==undefined){el_to_remove.push(modid)};
             }
-        })
+        });
         for (var idx in el_to_remove) {
             $('#group_parent_'+el_to_remove[idx]).remove();
         }
@@ -221,7 +221,7 @@ var DevMgrView = AccordionView.extend({
             this.widget.find("#"+this.modgroup_id).append(accordion_props.render().el);
         }
         return this;
-    }item.id
+    }
 });
 
 var DevMgrDevsView = AccordionView.extend({
