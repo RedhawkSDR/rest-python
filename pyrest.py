@@ -133,24 +133,24 @@ class Component(JsonHandler):
 application = tornado.web.Application([
     (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": cwd+"/static"}),
 
-    (r"/domains/?", DomainInfo),
-    (r"/domains/([^/]+)/?", DomainInfo),
+    (r"/rh/rest/domains/?", DomainInfo),
+    (r"/rh/rest/domains/([^/]+)/?", DomainInfo),
 
-    (r"/domains/([^/]+)/properties/?", DomainProps),
-    (r"/domains/([^/]+)/properties/([^/]+)", DomainProps),
+    (r"/rh/rest/domains/([^/]+)/properties/?", DomainProps),
+    (r"/rh/rest/domains/([^/]+)/properties/([^/]+)", DomainProps),
 
-    (r"/domains/([^/]+)/waveforms/?", Waveforms),
-    (r"/domains/([^/]+)/waveforms/available/?", WaveformsAvailable),
+    (r"/rh/rest/domains/([^/]+)/waveforms/?", Waveforms),
+    (r"/rh/rest/domains/([^/]+)/waveforms/available/?", WaveformsAvailable),
 
-    (r"/domains/([^/]+)/waveforms/([^/]+)", Waveforms),
+    (r"/rh/rest/domains/([^/]+)/waveforms/([^/]+)", Waveforms),
 
-    (r"/domains/([^/]+)/waveforms/([^/]+)/components/([^/]+)", Component),
+    (r"/rh/rest/domains/([^/]+)/waveforms/([^/]+)/components/([^/]+)", Component),
 
-    (r"/domains/([^/]+)/devicemanagers/?", DeviceManagers),
-    (r"/domains/([^/]+)/devicemanagers/([^/]+)", DeviceManagers),
+    (r"/rh/rest/domains/([^/]+)/devicemanagers/?", DeviceManagers),
+    (r"/rh/rest/domains/([^/]+)/devicemanagers/([^/]+)", DeviceManagers),
 
-    (r"/domains/([^/]+)/devicemanagers/([^/]+)/devices/?", Devices),
-    (r"/domains/([^/]+)/devicemanagers/([^/]+)/devices/([^/]+)", Devices)
+    (r"/rh/rest/domains/([^/]+)/devicemanagers/([^/]+)/devices/?", Devices),
+    (r"/rh/rest/domains/([^/]+)/devicemanagers/([^/]+)/devices/([^/]+)", Devices)
 ])
 
 if __name__ == '__main__':
