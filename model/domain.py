@@ -16,32 +16,38 @@ class Domain:
 
     def __init__(self, domainname):
         self.name = domainname
-        self.establish_domain()
+        self._establish_domain()
 
-    def odm_response(self, event):
+    def _odm_response(self, event):
         for eventH in self.eventHandlers:
             eventH.event_queue.put(event)
 
-    def connect_odm_listener(self):
+    def _connect_odm_listener(self):
         self.odmListener = ODMListener()
         self.odmListener.connect(self.domMgr_ptr)
-        self.odmListener.deviceManagerAdded.addListener(self.odm_response)
-        self.odmListener.deviceManagerRemoved.addListener(self.odm_response)
-        self.odmListener.applicationAdded.addListener(self.odm_response)
-        self.odmListener.applicationRemoved.addListener(self.odm_response)
+        self.odmListener.deviceManagerAdded.addListener(self._odm_response)
+        self.odmListener.deviceManagerRemoved.addListener(self._odm_response)
+        self.odmListener.applicationAdded.addListener(self._odm_response)
+        self.odmListener.applicationRemoved.addListener(self._odm_response)
 
-    def establish_domain(self):
+    def _establish_domain(self):
         redhawk.setTrackApps(False)
         self.domMgr_ptr = redhawk.attach(self.name)
-        self.connect_odm_listener()
+        self._connect_odm_listener()
+
+    def _props(self, properties):
+        prop_dict = []
+        for prop in properties:
+            prop_dict.append({'id': prop.id, "value": prop.value.value()})
+        return prop_dict
+
+    def properties(self):
+        props = self.domMgr_ptr.query([])
+        return self._props(props)
 
     def info(self):
         if self.domMgr_ptr:
-            ret_dict = [{'domMgrName': self.name}]
-            props = self.domMgr_ptr.query([])
-            for prop in props:
-                ret_dict.append({'prop': {"name": prop.id, "value": str(prop.value._v)}})
-            return {'domMgr': ret_dict}
+            return {'domainManager': {'id': self.name, 'properties': self.properties(), 'waveforms': self.apps()}}
         return None
 
     def apps(self):
@@ -51,19 +57,21 @@ class Domain:
         apps_dict = []
         for app in apps:
             apps_dict.append(app.name)
-        return {'waveforms': apps_dict}
+        return apps_dict
 
     def app_info(self, app_name):
         for app in self.domMgr_ptr.apps:
             if app.name == app_name:
-                ret_dict = [{'appName': app_name}]
+                comp_dict = []
                 for comp in app.comps:
-                    ret_dict.append({'comp': {"name": comp.name, "id": comp._id}})
+                    comp_dict.append({"name": comp.name, "id": comp._id})
+                prop_dict = []
                 for prop in app._properties:
-                    ret_dict.append({'prop': {"name": prop.clean_name, "value": str(prop.queryValue())}})
+                    prop_dict.append({"name": prop.clean_name, "value": str(prop.queryValue())})
+                port_dict = []
                 for port in app.ports:
-                    ret_dict.append({'port': port.name})
-                return {'app': ret_dict}
+                    port_dict.append({'name': port.name})
+                return {'name': app_name, 'components': comp_dict, 'ports': port_dict, 'properties': self._props(app._externalProps)}
         return None
 
     def comp_info(self, app_name, comp_id):
@@ -71,12 +79,14 @@ class Domain:
             if app.name == app_name:
                 for comp in app.comps:
                     if comp._id == comp_id:
-                        ret_dict= [{'compName': comp.name}, {'compId': comp._id}]
+                        prop_dict = []
                         for prop in comp._properties:
-                            ret_dict.append({'prop':{"name": prop.clean_name, "value": str(prop.queryValue())}})
+                            prop_dict.append({"name": prop.clean_name, "value": str(prop.queryValue())})
+                        port_dict = []
                         for port in comp.ports:
-                            ret_dict.append({'port': port.name})
-                        return {'comp': ret_dict}
+                            port_dict.append({'name': port.name})
+                        print comp
+                        return {'name': comp.name, 'id': comp._id, 'ports': port_dict, 'properties': self._props(comp.query([]))}
         return None
 
     def launch(self, app_name):
@@ -86,7 +96,6 @@ class Domain:
             ret_dict['launched'] = app.name
         except Exception, e:
             ret_dict['error'] = e
-        ret_dict.update(self.apps())
         return ret_dict
 
     def release(self, app_id):
@@ -100,7 +109,6 @@ class Domain:
                     break
         except Exception, e:
             ret_dict['error'] = e
-        ret_dict.update(self.apps())
         return ret_dict
 
     def available_apps(self):
@@ -111,7 +119,7 @@ class Domain:
         sad_ret = []
         for idx in range(len(sads)):
             sad_ret.append({'name': sads[idx], 'sad': sads_full_path[idx]})
-        return {'availableApps': sad_ret}
+        return sad_ret
 
     def device_managers(self):
         if self.domMgr_ptr is None:
@@ -119,30 +127,30 @@ class Domain:
         dev_mgrs = self.domMgr_ptr.devMgrs
         dev_mgrs_dict = []
         for dev_mgr in dev_mgrs:
-            dev_mgrs_dict.append({'devMgrName': dev_mgr.name})
+            dev_mgrs_dict.append(dev_mgr.name)
 
-        return {'deviceManagers': dev_mgrs_dict}
+        return dev_mgrs_dict
 
     def device_manager_info(self, dev_mgr_name):
         for devMgr in self.domMgr_ptr.devMgrs:
             if devMgr.name == dev_mgr_name:
-                ret_dict = [{'devMgrName': dev_mgr_name}]
+                dev_dict = []
                 for dev in devMgr.devs:
-                    ret_dict.append({'dev': {"name": dev.name, "id": dev._id}})
+                    dev_dict.append({"name": dev.name, "id": dev._id})
+
+                svc_dict = []
                 for svc in devMgr.services:
-                    ret_dict.append({'svc': {"name": svc.name, "id": svc._id}})
-                return {'devMgr': ret_dict}
+                    svc_dict.append({"name": svc.name, "id": svc._id})
+                return {'id': dev_mgr_name, 'devices': dev_dict, 'services': svc_dict}
         return None
 
     def devices(self, dev_mgr_name):
         for devMgr in self.domMgr_ptr.devMgrs:
             if devMgr.name == dev_mgr_name:
+                ret_dict = []
                 for dev in devMgr.devs:
-                    ret_dict = [
-                        {'devName': dev.name},
-                        {'devId': dev._id}
-                    ]
-                    return {'dev': ret_dict}
+                    ret_dict.append({'name': dev.name, 'id': dev._id})
+                    return ret_dict
         return None
 
     def device_info(self, dev_mgr_name, dev_id):
@@ -150,10 +158,12 @@ class Domain:
             if devMgr.name == dev_mgr_name:
                 for dev in devMgr.devs:
                     if dev._id == dev_id:
-                        ret_dict= [{'devName': dev.name}, {'devId': dev._id}]
+                        prop_dict = []
                         for prop in dev._properties:
-                            ret_dict.append({'prop': {"name": prop.clean_name, "value": str(prop.queryValue())}})
+                            prop_dict.append({"name": prop.clean_name, "value": prop.queryValue()})
+                        port_dict = []
                         for port in dev.ports:
-                            ret_dict.append({'port': port.name})
-                        return {'dev': ret_dict}
+                            port_dict.append({'name': port.name})
+
+                        return {'name': dev.name, 'id': dev._id, 'ports': port_dict, 'properties': prop_dict}
         return None

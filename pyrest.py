@@ -36,28 +36,20 @@ class DomainInfo(JsonHandler):
 class DomainProps(JsonHandler):
     def get(self, domain_name, prop_name=None):
         dom = Domain(str(domain_name))
-        info = dom.info()
+        info = dom.properties()
 
         if prop_name:
             value = None
-            for item in info['domMgr']:
-                if 'prop' in item and item['prop']['name'] == prop_name:
-                    value = item['prop']
+            for item in info:
+                if item['name'] == prop_name:
+                    value = item
 
             if value:
                 self._render_json(value)
             else:
-                self._render_json({'error': "Could not find prop"})
+                self._render_json({'error': "Could not find property"})
         else:
-            ret_seq = []
-            items = info['domMgr']
-            for item in items:
-                for entry in item:
-                    if entry == 'prop':
-                        ret_seq.append(item[entry])
-                        break
-
-            self._render_json({'props': ret_seq})
+            self._render_json({'properties': info})
 
 
 class DeviceManagers(JsonHandler):
@@ -67,7 +59,7 @@ class DeviceManagers(JsonHandler):
         if dev_mgr_name:
             info = dom.device_manager_info(dev_mgr_name)
         else:
-            info = dom.device_managers()
+            info = {'deviceManagers': dom.device_managers()}
 
         self._render_json(info)
 
@@ -79,7 +71,7 @@ class Waveforms(JsonHandler):
         if app_id:
             info = dom.app_info(app_id)
         else:
-            info = dom.apps()
+            info = {'waveforms': dom.apps(), 'available': dom.available_apps()}
 
         self._render_json(info)
 
@@ -90,6 +82,7 @@ class Waveforms(JsonHandler):
 
             dom = Domain(str(domain_name))
             info = dom.launch(app_name)
+            info.update({'waveforms': dom.apps()})
 
             self._render_json(info)
         else:
@@ -98,16 +91,9 @@ class Waveforms(JsonHandler):
     def delete(self, domain_name, app_id):
         dom = Domain(str(domain_name))
         info = dom.release(app_id)
+        info.update({'waveforms': dom.apps()})
 
         self._render_json(info)
-
-
-class WaveformsAvailable(JsonHandler):
-    def get(self, domain_name):
-        dom = Domain(str(domain_name))
-        apps = dom.available_apps()
-
-        self._render_json(apps)
 
 
 class Devices(JsonHandler):
@@ -117,7 +103,7 @@ class Devices(JsonHandler):
         if dev_id:
             info = dom.device_info(dev_mgr_name, dev_id)
         else:
-            info = dom.devices(dev_mgr_name)
+            info = {'devices': dom.devices(dev_mgr_name)}
 
         self._render_json(info)
 
@@ -140,8 +126,6 @@ application = tornado.web.Application([
     (r"/rh/rest/domains/([^/]+)/properties/([^/]+)", DomainProps),
 
     (r"/rh/rest/domains/([^/]+)/waveforms/?", Waveforms),
-    (r"/rh/rest/domains/([^/]+)/waveforms/available/?", WaveformsAvailable),
-
     (r"/rh/rest/domains/([^/]+)/waveforms/([^/]+)", Waveforms),
 
     (r"/rh/rest/domains/([^/]+)/waveforms/([^/]+)/components/([^/]+)", Component),
