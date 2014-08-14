@@ -72,7 +72,7 @@ class Domain:
                 for port in app.ports:
                     port_dict.append({'name': port.name})
                 return {
-                    'name': app_name,
+                    'id': app_name,
                     'components': comp_dict,
                     'ports': port_dict,
                     'properties': self._props(app.query([]))
