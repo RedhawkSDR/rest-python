@@ -41,6 +41,16 @@ class Domain:
             prop_dict.append({'id': prop.id, "value": prop.value.value()})
         return prop_dict
 
+    def _ports(self, ports):
+        port_dict = []
+        for port in ports:
+            port_value = {'name': port.name, 'direction': port._direction}
+            if port._direction == 'Uses':
+                port_value['type'] = port._using.name
+                port_value['namespace'] = port._using.nameSpace
+            port_dict.append(port_value)
+        return port_dict
+
     def properties(self):
         props = self.domMgr_ptr.query([])
         return self._props(props)
@@ -65,16 +75,10 @@ class Domain:
                 comp_dict = []
                 for comp in app.comps:
                     comp_dict.append({"name": comp.name, "id": comp._id})
-                prop_dict = []
-                for prop in app._properties:
-                    prop_dict.append({"name": prop.clean_name, "value": str(prop.queryValue())})
-                port_dict = []
-                for port in app.ports:
-                    port_dict.append({'name': port.name})
                 return {
                     'id': app_name,
                     'components': comp_dict,
-                    'ports': port_dict,
+                    'ports': self._ports(app.ports),
                     'properties': self._props(app.query([]))
                 }
         return None
@@ -87,11 +91,13 @@ class Domain:
                         prop_dict = []
                         for prop in comp._properties:
                             prop_dict.append({"name": prop.clean_name, "value": str(prop.queryValue())})
-                        port_dict = []
-                        for port in comp.ports:
-                            port_dict.append({'name': port.name})
-                        print comp
-                        return {'name': comp.name, 'id': comp._id, 'ports': port_dict, 'properties': self._props(comp.query([]))}
+
+                        return {
+                            'name': comp.name,
+                            'id': comp._id,
+                            'ports': self._ports(comp.ports),
+                            'properties': self._props(comp.query([]))
+                        }
         return None
 
     def launch(self, app_name):
@@ -166,9 +172,6 @@ class Domain:
                         prop_dict = []
                         for prop in dev._properties:
                             prop_dict.append({"name": prop.clean_name, "value": prop.queryValue()})
-                        port_dict = []
-                        for port in dev.ports:
-                            port_dict.append({'name': port.name})
 
-                        return {'name': dev.name, 'id': dev._id, 'ports': port_dict, 'properties': prop_dict}
+                        return {'name': dev.name, 'id': dev._id, 'ports': self._ports(dev.ports), 'properties': prop_dict}
         return None
