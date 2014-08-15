@@ -143,7 +143,6 @@ class Domain:
         dev_mgrs = self.domMgr_ptr.devMgrs
         dev_mgrs_dict = []
         for dev_mgr in dev_mgrs:
-            print dir(dev_mgr)
             dev_mgrs_dict.append({'name': dev_mgr.name, 'id': dev_mgr.id})
 
         return dev_mgrs_dict
@@ -167,18 +166,18 @@ class Domain:
                 }
         return None
 
-    def devices(self, dev_mgr_name):
+    def devices(self, dev_mgr_id):
         for devMgr in self.domMgr_ptr.devMgrs:
-            if devMgr.name == dev_mgr_name:
+            if devMgr.id == dev_mgr_id:
                 ret_dict = []
                 for dev in devMgr.devs:
                     ret_dict.append({'name': dev.name, 'id': dev._id})
                     return ret_dict
         return None
 
-    def device_info(self, dev_mgr_name, dev_id):
+    def device_info(self, dev_mgr_id, dev_id):
         for devMgr in self.domMgr_ptr.devMgrs:
-            if devMgr.name == dev_mgr_name:
+            if devMgr.id == dev_mgr_id:
                 for dev in devMgr.devs:
                     if dev._id == dev_id:
                         prop_dict = []
