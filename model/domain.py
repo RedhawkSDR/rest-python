@@ -57,7 +57,6 @@ class Domain:
 
     def info(self):
         if self.domMgr_ptr:
-            print dir(self.domMgr_ptr)
             return {
                 'id': self.domMgr_ptr._get_identifier(),
                 'name': self.name,
@@ -73,7 +72,6 @@ class Domain:
         apps = self.domMgr_ptr.apps
         apps_dict = []
         for app in apps:
-            print dir(app)
             apps_dict.append({'name': app.name, 'id': app._get_identifier()})
         return apps_dict
 
@@ -192,5 +190,11 @@ class Domain:
                         for prop in dev._properties:
                             prop_dict.append({"name": prop.clean_name, "value": prop.queryValue()})
 
-                        return {'name': dev.name, 'id': dev._id, 'ports': self._ports(dev.ports), 'properties': prop_dict}
+                        return {
+                            'name': dev.name,
+                            'id': dev._id,
+                            'started': dev._get_started(),
+                            'ports': self._ports(dev.ports),
+                            'properties': prop_dict
+                        }
         return None
