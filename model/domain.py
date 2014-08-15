@@ -57,8 +57,10 @@ class Domain:
 
     def info(self):
         if self.domMgr_ptr:
+            print dir(self.domMgr_ptr)
             return {
-                'id': self.name,
+                'id': self.domMgr_ptr._get_identifier(),
+                'name': self.name,
                 'properties': self.properties(),
                 'waveforms': self.apps(),
                 'deviceManagers': self.device_managers()
