@@ -73,26 +73,28 @@ class Domain:
         apps = self.domMgr_ptr.apps
         apps_dict = []
         for app in apps:
-            apps_dict.append(app.name)
+            print dir(app)
+            apps_dict.append({'name': app.name, 'id': app._get_identifier()})
         return apps_dict
 
-    def app_info(self, app_name):
+    def app_info(self, app_id):
         for app in self.domMgr_ptr.apps:
-            if app.name == app_name:
+            if app._get_identifier() == app_id:
                 comp_dict = []
                 for comp in app.comps:
                     comp_dict.append({"name": comp.name, "id": comp._id})
                 return {
-                    'id': app_name,
+                    'id': app._get_identifier(),
+                    'name': app.name,
                     'components': comp_dict,
                     'ports': self._ports(app.ports),
                     'properties': self._props(app.query([]))
                 }
         return None
 
-    def comp_info(self, app_name, comp_id):
+    def comp_info(self, app_id, comp_id):
         for app in self.domMgr_ptr.apps:
-            if app.name == app_name:
+            if app._get_identifier() == app_id:
                 for comp in app.comps:
                     if comp._id == comp_id:
                         prop_dict = []
@@ -121,12 +123,16 @@ class Domain:
         try:
             apps = self.domMgr_ptr.apps
             for app in apps:
-                if app.name == app_id:
+                if app._get_identifier() == app_id:
                     app.releaseObject()
                     ret_dict['released'] = app.name
                     break
         except Exception, e:
             ret_dict['error'] = e
+
+        if not 'released' in ret_dict:
+            ret_dict['error'] = 'Waveform id ('+app_id+') not found.'
+
         return ret_dict
 
     def available_apps(self):

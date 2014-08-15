@@ -12,7 +12,7 @@ import tornado.websocket
 
 class JsonHandler(tornado.web.RequestHandler):
     def _render_json(self, resp):
-        if resp:
+        if resp and not 'error' in resp:
             self.set_header("Content-Type", "application/json; charset='utf-8'")
             self.write(resp)
         else:
