@@ -57,7 +57,12 @@ class Domain:
 
     def info(self):
         if self.domMgr_ptr:
-            return {'domainManager': {'id': self.name, 'properties': self.properties(), 'waveforms': self.apps()}}
+            return {
+                'id': self.name,
+                'properties': self.properties(),
+                'waveforms': self.apps(),
+                'deviceManagers': self.device_managers()
+            }
         return None
 
     def apps(self):
@@ -138,13 +143,14 @@ class Domain:
         dev_mgrs = self.domMgr_ptr.devMgrs
         dev_mgrs_dict = []
         for dev_mgr in dev_mgrs:
-            dev_mgrs_dict.append(dev_mgr.name)
+            print dir(dev_mgr)
+            dev_mgrs_dict.append({'name': dev_mgr.name, 'id': dev_mgr.id})
 
         return dev_mgrs_dict
 
-    def device_manager_info(self, dev_mgr_name):
+    def device_manager_info(self, dev_mgr_id):
         for devMgr in self.domMgr_ptr.devMgrs:
-            if devMgr.name == dev_mgr_name:
+            if devMgr.id == dev_mgr_id:
                 dev_dict = []
                 for dev in devMgr.devs:
                     dev_dict.append({"name": dev.name, "id": dev._id})
@@ -152,7 +158,13 @@ class Domain:
                 svc_dict = []
                 for svc in devMgr.services:
                     svc_dict.append({"name": svc.name, "id": svc._id})
-                return {'id': dev_mgr_name, 'devices': dev_dict, 'services': svc_dict}
+                return {
+                    'name': devMgr.name,
+                    'id': devMgr.id,
+                    'properties': self._props(devMgr.query([])),
+                    'devices': dev_dict,
+                    'services': svc_dict
+                }
         return None
 
     def devices(self, dev_mgr_name):

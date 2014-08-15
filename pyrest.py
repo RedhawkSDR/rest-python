@@ -53,11 +53,11 @@ class DomainProps(JsonHandler):
 
 
 class DeviceManagers(JsonHandler):
-    def get(self, domain_name, dev_mgr_name=None):
+    def get(self, domain_name, dev_mgr_id=None):
         dom = Domain(str(domain_name))
 
-        if dev_mgr_name:
-            info = dom.device_manager_info(dev_mgr_name)
+        if dev_mgr_id:
+            info = dom.device_manager_info(dev_mgr_id)
         else:
             info = {'deviceManagers': dom.device_managers()}
 
@@ -130,11 +130,11 @@ application = tornado.web.Application([
 
     (r"/rh/rest/domains/([^/]+)/waveforms/([^/]+)/components/([^/]+)", Component),
 
-    (r"/rh/rest/domains/([^/]+)/devicemanagers/?", DeviceManagers),
-    (r"/rh/rest/domains/([^/]+)/devicemanagers/([^/]+)", DeviceManagers),
+    (r"/rh/rest/domains/([^/]+)/deviceManagers/?", DeviceManagers),
+    (r"/rh/rest/domains/([^/]+)/deviceManagers/([^/]+)", DeviceManagers),
 
-    (r"/rh/rest/domains/([^/]+)/devicemanagers/([^/]+)/devices/?", Devices),
-    (r"/rh/rest/domains/([^/]+)/devicemanagers/([^/]+)/devices/([^/]+)", Devices)
+    (r"/rh/rest/domains/([^/]+)/deviceManagers/([^/]+)/devices/?", Devices),
+    (r"/rh/rest/domains/([^/]+)/deviceManagers/([^/]+)/devices/([^/]+)", Devices)
 ])
 
 if __name__ == '__main__':
