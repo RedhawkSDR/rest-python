@@ -39,10 +39,10 @@ class Domain:
         self._connect_odm_listener()
 
     def _any_simple(self, any):
-        return {'type': 'simple', 'value': any._v}
+        return {'scaType': 'simple', 'value': any._v}
 
     def _any_struct(self, any):
-        ret = {'type': 'struct'}
+        ret = {'scaType': 'struct'}
         value = {}
         for a in any._v:
             #ret['value'].append(self._prop(a))
@@ -51,7 +51,7 @@ class Domain:
         return ret
 
     def _any_seq(self, any):
-        ret = {'type': 'seq', 'value': []}
+        ret = {'scaType': 'seq', 'value': []}
         for a in any._v:
             ret['value'].append(self._any(a))
         return ret
