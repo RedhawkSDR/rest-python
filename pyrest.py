@@ -3,7 +3,7 @@ import json
 import os,sys
 cwd = os.getcwd()
 
-from model.domain import Domain
+from model.domain import Domain, ResourceNotFound
 from model.domain import scan_domains
 import tornado.ioloop
 import tornado.web
@@ -11,6 +11,20 @@ import tornado.websocket
 
 
 class JsonHandler(tornado.web.RequestHandler):
+    def _handle_request_exception(self, e):
+        print 'Exception::', e
+        status = 500
+        resp = {'message': str(e), 'error': type(e).__name__}
+
+        if type(e) == ResourceNotFound:
+            status = 404
+        elif type(e) == KeyError:
+            resp = {'error': 'JsonParsing', 'message': "Expecting value "+str(e)}
+        elif type(e) == ValueError:
+            resp = {'error': 'JsonParsing', 'message': str(e)}
+
+        self._render_error(resp, status)
+
     def _render_json(self, resp):
         if resp and not 'error' in resp:
             self.set_header("Content-Type", "application/json; charset='utf-8'")
@@ -20,7 +34,7 @@ class JsonHandler(tornado.web.RequestHandler):
 
     def _render_error(self, msg, status=500):
         self.set_status(status)
-        self.finish({"error": msg})
+        self.finish(msg)
 
 
 class DomainInfo(JsonHandler):
@@ -77,23 +91,19 @@ class Waveforms(JsonHandler):
 
     def post(self, domain_name):
         data = json.loads(self.request.body)
-        if 'name' in data:
-            app_name = data['name']
 
-            dom = Domain(str(domain_name))
-            info = dom.launch(app_name)
-            info.update({'waveforms': dom.apps()})
+        app_name = data['name']
 
-            self._render_json(info)
-        else:
-            self._render_error("Request is missing 'name' value", 500)
+        dom = Domain(str(domain_name))
+        app_id = dom.launch(app_name)
+
+        self._render_json({'launched': app_id, 'waveforms': dom.apps()})
 
     def delete(self, domain_name, app_id):
         dom = Domain(str(domain_name))
-        info = dom.release(app_id)
-        info.update({'waveforms': dom.apps()})
+        dom.release(app_id)
 
-        self._render_json(info)
+        self._render_json({'released': app_id, 'waveforms': dom.apps()})
 
 
 class Devices(JsonHandler):

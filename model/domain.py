@@ -11,6 +11,42 @@ def scan_domains():
 def _my_dir(obj):
     return [m for m in dir(obj) if not m.startswith('__')]
 
+
+class ResourceNotFound(Exception):
+    def __init__(self, resource='resource', name='Unknown'):
+        self.name = name
+        self.resource = resource
+
+    def __str__(self):
+        return "Unable to find %s '%s'" % (self.resource, self.name)
+
+
+class InvalidWaveform(Exception):
+    def __init__(self, name='Unknown'):
+        self.name = name
+
+    def __str__(self):
+        return "'%s' is not a valid waveform" % self.name
+
+
+class WaveformLaunchError(Exception):
+    def __init__(self, name='Unknown', msg=''):
+        self.name = name
+        self.msg = msg
+
+    def __str__(self):
+        return "Not able to launch waveform '%s'. %s" % (self.name, self.msg)
+
+
+class WaveformReleaseError(Exception):
+    def __init__(self, name='Unknown', msg=''):
+        self.name = name
+        self.msg = msg
+
+    def __str__(self):
+        return "Not able to release waveform '%s'. %s" % (self.name, self.msg)
+
+
 class Domain:
     domMgr_ptr = None
     odmListener = None
@@ -19,7 +55,10 @@ class Domain:
 
     def __init__(self, domainname):
         self.name = domainname
-        self._establish_domain()
+        try:
+            self._establish_domain()
+        except StandardError:
+            raise ResourceNotFound("domain", domainname)
 
     def _odm_response(self, event):
         for eventH in self.eventHandlers:
@@ -134,7 +173,7 @@ class Domain:
                 'waveforms': self.apps(),
                 'deviceManagers': self.device_managers()
             }
-        return None
+        raise ResourceNotFound('domain', self.name)
 
     def apps(self):
         if self.domMgr_ptr is None:
@@ -159,7 +198,7 @@ class Domain:
                     'ports': self._ports(app.ports),
                     'properties': prop_dict
                 }
-        return None
+        raise ResourceNotFound('waveform', app_id)
 
     def comp_info(self, app_id, comp_id):
         for app in self.domMgr_ptr.apps:
@@ -174,33 +213,26 @@ class Domain:
                             'ports': self._ports(comp.ports),
                             'properties': prop_dict
                         }
-        return None
+                raise ResourceNotFound('component', comp_id)
+        raise ResourceNotFound('waveform', app_id)
 
     def launch(self, app_name):
-        ret_dict = {}
         try:
             app = self.domMgr_ptr.createApplication(str(app_name))
-            ret_dict['launched'] = app.name
+            return app._get_identifier()
         except Exception, e:
-            ret_dict['error'] = e
-        return ret_dict
+            raise WaveformLaunchError(app_name, str(e))
 
     def release(self, app_id):
-        ret_dict = {}
         try:
             apps = self.domMgr_ptr.apps
             for app in apps:
                 if app._get_identifier() == app_id:
                     app.releaseObject()
-                    ret_dict['released'] = app.name
-                    break
+                    return app_id
+            raise ResourceNotFound('waveform', app_id)
         except Exception, e:
-            ret_dict['error'] = e
-
-        if not 'released' in ret_dict:
-            ret_dict['error'] = 'Waveform id ('+app_id+') not found.'
-
-        return ret_dict
+            raise WaveformReleaseError(app_id, str(e))
 
     def available_apps(self):
         if self.domMgr_ptr is None:
@@ -214,7 +246,7 @@ class Domain:
 
     def device_managers(self):
         if self.domMgr_ptr is None:
-            return {}
+            raise ResourceNotFound('domain', self.name)
         dev_mgrs = self.domMgr_ptr.devMgrs
         dev_mgrs_dict = []
         for dev_mgr in dev_mgrs:
@@ -241,7 +273,7 @@ class Domain:
                     'devices': dev_dict,
                     'services': svc_dict
                 }
-        return None
+        raise ResourceNotFound('device manager', dev_mgr_id)
 
     def devices(self, dev_mgr_id):
         for devMgr in self.domMgr_ptr.devMgrs:
@@ -250,7 +282,7 @@ class Domain:
                 for dev in devMgr.devs:
                     ret_dict.append({'name': dev.name, 'id': dev._id})
                     return ret_dict
-        return None
+        raise ResourceNotFound('device manager', dev_mgr_id)
 
     def device_info(self, dev_mgr_id, dev_id):
         for devMgr in self.domMgr_ptr.devMgrs:
@@ -267,4 +299,5 @@ class Domain:
                             # 'properties': self._props(dev.query([])),
                             'properties': prop_dict
                         }
-        return None
+                raise ResourceNotFound('device', dev_id)
+        raise ResourceNotFound('device manager', dev_mgr_id)
