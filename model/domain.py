@@ -200,21 +200,26 @@ class Domain:
                 }
         raise ResourceNotFound('waveform', app_id)
 
-    def comp_info(self, app_id, comp_id):
+    def component(self, app_id, comp_id):
         for app in self.domMgr_ptr.apps:
             if app._get_identifier() == app_id:
                 for comp in app.comps:
                     if comp._id == comp_id:
-                        prop_dict = self._propSet(comp._properties)  # self._props(comp.query([]))
-
-                        return {
-                            'name': comp.name,
-                            'id': comp._id,
-                            'ports': self._ports(comp.ports),
-                            'properties': prop_dict
-                        }
+                        return comp
                 raise ResourceNotFound('component', comp_id)
         raise ResourceNotFound('waveform', app_id)
+
+    def comp_info(self, app_id, comp_id):
+        comp = self.component(app_id, comp_id)
+        prop_dict = self._propSet(comp._properties)  # self._props(comp.query([]))
+
+        return {
+            'name': comp.name,
+            'id': comp._id,
+            'ports': self._ports(comp.ports),
+            'properties': prop_dict
+        }
+
 
     def launch(self, app_name):
         try:

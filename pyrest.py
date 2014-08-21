@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import json
-import os,sys
+import os
+from omniORB.CORBA import BAD_PARAM
+
 cwd = os.getcwd()
 
 from model.domain import Domain, ResourceNotFound
@@ -126,6 +128,29 @@ class Component(JsonHandler):
         self._render_json(info)
 
 
+class Properties(JsonHandler):
+    def put(self, domain=None, waveform=None, component=None):
+        data = json.loads(self.request.body)
+
+        dom = Domain(str(domain))
+        comp = dom.component(waveform, component)
+
+        changes = {}
+        for p in data['properties']:
+            changes[p['id']] = p['value']
+
+        configureChanges = {}
+        for prop in comp._properties:
+            if prop.id in changes:
+                if changes[prop.id] != prop.queryValue():
+                    print "New Value", changes[prop.id], '->', prop.queryValue()
+                    configureChanges[prop.id] = (type(prop.queryValue()))(changes[prop.id])
+
+        print configureChanges
+        print comp._properties
+        comp.configure(configureChanges)
+
+
 application = tornado.web.Application([
     (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": cwd+"/static"}),
 
@@ -139,6 +164,7 @@ application = tornado.web.Application([
     (r"/rh/rest/domains/([^/]+)/waveforms/([^/]+)", Waveforms),
 
     (r"/rh/rest/domains/([^/]+)/waveforms/([^/]+)/components/([^/]+)", Component),
+    (r"/rh/rest/domains/([^/]+)/waveforms/([^/]+)/components/([^/]+)/configure", Properties),
 
     (r"/rh/rest/domains/([^/]+)/deviceManagers/?", DeviceManagers),
     (r"/rh/rest/domains/([^/]+)/deviceManagers/([^/]+)", DeviceManagers),
