@@ -7,15 +7,25 @@ ComponentProperties -- Manipulate properties of a specific component
 """
 
 from handler import JsonHandler
+from helper import PropertyHelper, PortHelper
 from model.domain import Domain
 
 import json
 
 
-class Component(JsonHandler):
+class Component(JsonHandler, PropertyHelper, PortHelper):
     def get(self, domain_name, app_id, comp_id):
         dom = Domain(str(domain_name))
-        info = dom.comp_info(app_id, comp_id)
+
+        comp = dom.component(app_id, comp_id)
+        prop_dict = self.format_properties(comp._properties)  # self._props(comp.query([]))
+
+        info = {
+            'name': comp.name,
+            'id': comp._id,
+            'ports': self.format_ports(comp.ports),
+            'properties': prop_dict
+        }
 
         self._render_json(info)
 
