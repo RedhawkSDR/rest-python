@@ -17,7 +17,7 @@ class Component(JsonHandler, PropertyHelper, PortHelper):
     def get(self, domain_name, app_id, comp_id):
         dom = Domain(str(domain_name))
 
-        comp = dom.component(app_id, comp_id)
+        comp = dom.find_component(app_id, comp_id)
         prop_dict = self.format_properties(comp._properties)  # self._props(comp.query([]))
 
         info = {
@@ -35,7 +35,7 @@ class ComponentProperties(JsonHandler):
         data = json.loads(self.request.body)
 
         dom = Domain(str(domain))
-        comp = dom.component(waveform, component)
+        comp = dom.find_component(waveform, component)
 
         changes = {}
         for p in data['properties']:

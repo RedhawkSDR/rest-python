@@ -82,74 +82,68 @@ class Domain(PropertyHelper, PortHelper):
         props = self.format_properties(self.domMgr_ptr.query([]))  # TODO: self._propSet(self.domMgr_ptr._properties)
         return props
 
-    def info(self):
+    def _domain(self):
         if self.domMgr_ptr:
-            return {
-                'id': self.domMgr_ptr._get_identifier(),
-                'name': self.name,
-                'properties': self.properties(),
-                'waveforms': self.apps(),
-                'deviceManagers': self.device_managers()
-            }
+            return self.domMgr_ptr
         raise ResourceNotFound('domain', self.name)
 
+    def find_app(self, app_id=None):
+        _dom = self._domain()
+        apps = _dom.apps
+
+        if not app_id:
+            return apps
+
+        for app in apps:
+            if app._get_identifier() == app_id:
+                return app
+        raise ResourceNotFound('waveform', app_id)
+
+    def find_component(self, app_id, comp_id=None):
+        app = self.find_app(app_id)
+
+        if not comp_id:
+            return app.comps
+
+        for comp in app.comps:
+            if comp._id == comp_id:
+                return comp
+        raise ResourceNotFound('component', comp_id)
+
     def apps(self):
-        if self.domMgr_ptr is None:
-            return {}
-        apps = self.domMgr_ptr.apps
         apps_dict = []
+        apps = self.find_app()
         for app in apps:
             apps_dict.append({'name': app.name, 'id': app._get_identifier()})
         return apps_dict
 
-    def app_info(self, app_id):
-        for app in self.domMgr_ptr.apps:
-            if app._get_identifier() == app_id:
-                comp_dict = []
-                for comp in app.comps:
-                    comp_dict.append({"name": comp.name, "id": comp._id})
-                prop_dict = self.format_properties(app._properties)  # self._props(app.query([]))
-                return {
-                    'id': app._get_identifier(),
-                    'name': app.name,
-                    'components': comp_dict,
-                    'ports': self.format_ports(app.ports),
-                    'properties': prop_dict
-                }
-        raise ResourceNotFound('waveform', app_id)
-
-    def component(self, app_id, comp_id):
-        for app in self.domMgr_ptr.apps:
-            if app._get_identifier() == app_id:
-                for comp in app.comps:
-                    if comp._id == comp_id:
-                        return comp
-                raise ResourceNotFound('component', comp_id)
-        raise ResourceNotFound('waveform', app_id)
+    def components(self, app_id):
+        comps_dict = []
+        comps = self.find_component(app_id)
+        for comp in comps:
+            comps_dict.append({'name': comp.name, 'id': comp._get_identifier()})
+        return comps_dict
 
     def launch(self, app_name):
+        _dom = self._domain()
         try:
-            app = self.domMgr_ptr.createApplication(str(app_name))
+            app = _dom.createApplication(app_name)
             return app._get_identifier()
         except Exception, e:
             raise WaveformLaunchError(app_name, str(e))
 
     def release(self, app_id):
+        app = self.find_app(app_id)
         try:
-            apps = self.domMgr_ptr.apps
-            for app in apps:
-                if app._get_identifier() == app_id:
-                    app.releaseObject()
-                    return app_id
-            raise ResourceNotFound('waveform', app_id)
+            app.releaseObject()
+            return app_id
         except Exception, e:
             raise WaveformReleaseError(app_id, str(e))
 
     def available_apps(self):
-        if self.domMgr_ptr is None:
-            return {}
-        sads_full_path = self.domMgr_ptr.catalogSads()
-        sads = self.domMgr_ptr._sads
+        _dom = self._domain()
+        sads_full_path = _dom.catalogSads()
+        sads = _dom._sads
         sad_ret = []
         for idx in range(len(sads)):
             sad_ret.append({'name': sads[idx], 'sad': sads_full_path[idx]})

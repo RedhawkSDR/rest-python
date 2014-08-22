@@ -6,18 +6,27 @@ Waveforms -- Get info, launch and release
 """
 
 from handler import JsonHandler
+from helper import PropertyHelper, PortHelper
 from model.domain import Domain
 
 import json
 
 
-class Waveforms(JsonHandler):
+class Waveforms(JsonHandler, PropertyHelper, PortHelper):
 
     def get(self, domain_name, app_id=None):
         dom = Domain(str(domain_name))
 
         if app_id:
-            info = dom.app_info(app_id)
+            app = dom.find_app(app_id)
+
+            info =  {
+                'id': app._get_identifier(),
+                'name': app.name,
+                'components': dom.components(app_id),
+                'ports': self.format_ports(app.ports),
+                'properties': self.format_properties(app._properties)
+            }
         else:
             info = {'waveforms': dom.apps(), 'available': dom.available_apps()}
 
@@ -29,7 +38,7 @@ class Waveforms(JsonHandler):
         app_name = data['name']
 
         dom = Domain(str(domain_name))
-        app_id = dom.launch(app_name)
+        app_id = dom.launch(str(app_name))
 
         self._render_json({'launched': app_id, 'waveforms': dom.apps()})
 

@@ -9,11 +9,21 @@ DomainProperties -- Manipulate the properties of a domain
 from handler import JsonHandler
 from model.domain import Domain, scan_domains
 
+
 class DomainInfo(JsonHandler):
     def get(self, domain_name=None):
         if domain_name:
             dom = Domain(str(domain_name))
-            info = dom.info()
+            dom_info = dom._domain()
+
+            info = {
+                'id': dom_info._get_identifier(),
+                'name': dom_info.name,
+                'properties': dom.properties(),
+                'waveforms': dom.apps(),
+                'deviceManagers': dom.device_managers()
+            }
+
         else:
             info = {'domains': scan_domains()}
         self._render_json(info)
