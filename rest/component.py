@@ -14,24 +14,34 @@ import json
 
 
 class Component(JsonHandler, PropertyHelper, PortHelper):
-    def get(self, domain_name, app_id, comp_id):
+    def get(self, domain_name, app_id, comp_id=None):
         dom = Domain(str(domain_name))
 
-        comp = dom.find_component(app_id, comp_id)
-        prop_dict = self.format_properties(comp._properties)  # self._props(comp.query([]))
+        if comp_id:
+            comp = dom.find_component(app_id, comp_id)
 
-        info = {
-            'name': comp.name,
-            'id': comp._id,
-            'ports': self.format_ports(comp.ports),
-            'properties': prop_dict
-        }
+            info = {
+                'name': comp.name,
+                'id': comp._id,
+                'ports': self.format_ports(comp.ports),
+                'properties': self.format_properties(comp._properties)
+            }
+        else:
+            info = {'components': dom.components(app_id)}
 
         self._render_json(info)
 
 
-class ComponentProperties(JsonHandler):
-    def put(self, domain=None, waveform=None, component=None):
+class ComponentProperties(JsonHandler, PropertyHelper):
+    def get(self, domain, waveform, component):
+        dom = Domain(str(domain))
+        comp = dom.find_component(waveform, component)
+
+        self._render_json({
+            'properties': self.format_properties(comp._properties)
+        })
+
+    def put(self, domain, waveform, component):
         data = json.loads(self.request.body)
 
         dom = Domain(str(domain))

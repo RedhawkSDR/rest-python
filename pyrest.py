@@ -25,8 +25,9 @@ application = tornado.web.Application([
     (r"/rh/rest/domains/([^/]+)/waveforms/?", Waveforms),
     (r"/rh/rest/domains/([^/]+)/waveforms/([^/]+)", Waveforms),
 
+    (r"/rh/rest/domains/([^/]+)/waveforms/([^/]+)/components/?", Component),
     (r"/rh/rest/domains/([^/]+)/waveforms/([^/]+)/components/([^/]+)", Component),
-    (r"/rh/rest/domains/([^/]+)/waveforms/([^/]+)/components/([^/]+)/configure", ComponentProperties),
+    (r"/rh/rest/domains/([^/]+)/waveforms/([^/]+)/components/([^/]+)/properties", ComponentProperties),
 
     (r"/rh/rest/domains/([^/]+)/deviceManagers/?", DeviceManagers),
     (r"/rh/rest/domains/([^/]+)/deviceManagers/([^/]+)", DeviceManagers),
