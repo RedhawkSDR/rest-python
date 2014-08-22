@@ -22,14 +22,6 @@ class ResourceNotFound(Exception):
         return "Unable to find %s '%s'" % (self.resource, self.name)
 
 
-class InvalidWaveform(Exception):
-    def __init__(self, name='Unknown'):
-        self.name = name
-
-    def __str__(self):
-        return "'%s' is not a valid waveform" % self.name
-
-
 class WaveformLaunchError(Exception):
     def __init__(self, name='Unknown', msg=''):
         self.name = name
@@ -110,6 +102,39 @@ class Domain(PropertyHelper, PortHelper):
                 return comp
         raise ResourceNotFound('component', comp_id)
 
+    def find_device_manager(self, device_manager_id=None):
+        _dom = self._domain()
+
+        if not device_manager_id:
+            return _dom.devMgrs
+
+        for dev_mgr in _dom.devMgrs:
+            if dev_mgr.id == device_manager_id:
+                return dev_mgr
+        raise ResourceNotFound('device manager', device_manager_id)
+
+    def find_device(self, device_manager_id, device_id=None):
+        dev_mgr = self.find_device_manager(device_manager_id)
+
+        if not device_id:
+            return dev_mgr.devs
+
+        for dev in dev_mgr.devs:
+            if dev._id == device_id:
+                return dev
+        raise ResourceNotFound('device', device_id)
+
+    def find_service(self, device_manager_id, service_id=None):
+        dev_mgr = self.find_device_manager(device_manager_id)
+
+        if not service_id:
+            return dev_mgr.services
+
+        for svc in dev_mgr.services:
+            if svc.id == service_id:
+                return svc
+        raise ResourceNotFound('service', service_id)
+
     def apps(self):
         apps_dict = []
         apps = self.find_app()
@@ -159,50 +184,16 @@ class Domain(PropertyHelper, PortHelper):
 
         return dev_mgrs_dict
 
-    def device_manager_info(self, dev_mgr_id):
-        for devMgr in self.domMgr_ptr.devMgrs:
-            if devMgr.id == dev_mgr_id:
-                dev_dict = []
-                for dev in devMgr.devs:
-                    dev_dict.append({"name": dev.name, "id": dev._id})
-
-                svc_dict = []
-                for svc in devMgr.services:
-                    svc_dict.append({"name": svc.name, "id": svc._id})
-
-                prop_dict = self.format_properties(devMgr.query([]))  # TODO: self._propSet(devMgr._properties)
-                return {
-                    'name': devMgr.name,
-                    'id': devMgr.id,
-                    'properties': prop_dict,
-                    'devices': dev_dict,
-                    'services': svc_dict
-                }
-        raise ResourceNotFound('device manager', dev_mgr_id)
-
     def devices(self, dev_mgr_id):
-        for devMgr in self.domMgr_ptr.devMgrs:
-            if devMgr.id == dev_mgr_id:
-                ret_dict = []
-                for dev in devMgr.devs:
-                    ret_dict.append({'name': dev.name, 'id': dev._id})
-                    return ret_dict
-        raise ResourceNotFound('device manager', dev_mgr_id)
+        devs = self.find_device(dev_mgr_id)
+        ret_dict = []
+        for dev in devs:
+            ret_dict.append({'name': dev.name, 'id': dev._id})
+            return ret_dict
 
-    def device_info(self, dev_mgr_id, dev_id):
-        for devMgr in self.domMgr_ptr.devMgrs:
-            if devMgr.id == dev_mgr_id:
-                for dev in devMgr.devs:
-                    if dev._id == dev_id:
-                        prop_dict = self.format_properties(dev._properties)
-
-                        return {
-                            'name': dev.name,
-                            'id': dev._id,
-                            'started': dev._get_started(),
-                            'ports': self.format_ports(dev.ports),
-                            # 'properties': self.format_properties(dev.query([])),
-                            'properties': prop_dict
-                        }
-                raise ResourceNotFound('device', dev_id)
-        raise ResourceNotFound('device manager', dev_mgr_id)
+    def services(self, dev_mgr_id):
+        svcs = self.find_service(dev_mgr_id)
+        ret_dict = []
+        for svc in svcs:
+            ret_dict.append({'name': svc.name, 'id': svc._id})
+            return ret_dict
