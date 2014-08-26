@@ -32,3 +32,28 @@ class JsonTests(AsyncHTTPTestCase):
         self.assertEquals(body['error'], Default.RESOURCE_NOT_FOUND_ERR)
         self.assertTrue('message' in body)
         self.assertTrue(Default.RESOURCE_NOT_FOUND_MSG_REGEX.match(body['message']))
+
+    def assertAttr(self, data, name, value):
+        self.assertTrue(name in data)
+        self.assertEquals(data[name], value)
+
+    def assertList(self, data, name):
+        self.assertTrue(name in data)
+        self.assertTrue(isinstance(data[name], list))
+
+    def assertIdList(self, data, name):
+        self.assertList(data, name)
+        for item in data[name]:
+            self.assertTrue('id' in item)
+            self.assertTrue('name' in item)
+
+    def assertProperties(self, data):
+        self.assertTrue(isinstance(data, list))
+        for prop in data:
+            self.assertList(json, 'kinds')
+            self.assertTrue('name' in json)
+            self.assertTrue('value' in json)
+            self.assertTrue('scaType' in json)
+            self.assertTrue('mode' in json)
+            self.assertTrue('type' in json)
+            self.assertTrue('id' in json)
