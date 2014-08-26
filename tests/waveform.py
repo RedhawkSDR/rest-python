@@ -36,8 +36,7 @@ class WaveformTests(JsonTests):
             'DELETE'
         )
 
-        self.assertTrue('released' in json)
-        self.assertEquals(json['released'], wf_id)
+        self.assertAttr(json, 'released', wf_id)
 
         self.assertTrue('waveforms' in json)
         self.assertFalse(json['released'] in json['waveforms'])
@@ -62,11 +61,25 @@ class WaveformTests(JsonTests):
             self.assertTrue('sad' in app)
             self.assertTrue('name' in app)
 
-        self.assertTrue('waveforms' in json)
-        self.assertTrue(isinstance(json['waveforms'], list))
-
-        for wf in json['waveforms']:
-            self.assertTrue('id' in wf)
-            self.assertTrue('name' in wf)
-
+        self.assertIdList(json, 'waveforms')
         self.assertEquals(waveforms, json['waveforms'])
+
+    def test_info(self):
+        wf_id = self._launch(Default.WAVEFORM)
+
+        url = '/domains/%s/waveforms/%s' % (Default.DOMAIN_NAME, wf_id)
+        json, resp = self._json_request(url, 200)
+
+        self.assertList(json, 'ports')
+        self.assertList(json, 'components')
+        self.assertTrue('name' in json)
+        self.assertAttr(json, 'id', wf_id)
+
+        self.assertList(json, 'properties')
+        # TODO: self.assertProperties(json['properties'])
+
+    def test_not_found(self):
+        url = '/domains/%s/waveforms/adskfhsdhfasdhjfhsd' %Default.DOMAIN_NAME
+        json, resp = self._json_request(url, 404)
+
+        self._resource_not_found(json)

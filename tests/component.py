@@ -63,7 +63,7 @@ class ComponentTests(JsonTests):
     def test_not_found(self):
         self._setUp()
 
-        json, resp = self._json_request('%s/components/ggsdfgfdg' % self.base_url, 200)
+        json, resp = self._json_request('%s/components/ggsdfgfdg' % self.base_url, 404)
 
         self._resource_not_found(json)
 
