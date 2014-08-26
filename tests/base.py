@@ -25,7 +25,11 @@ class JsonTests(AsyncHTTPTestCase):
 
         self.assertEquals(code, response.code)
 
-        return json.loads(response.body), response
+        data = {}
+        if response.body:
+            data = json.loads(response.body)
+
+        return data, response
 
     def _resource_not_found(self, body):
         self.assertTrue('error' in body)
@@ -50,10 +54,10 @@ class JsonTests(AsyncHTTPTestCase):
     def assertProperties(self, data):
         self.assertTrue(isinstance(data, list))
         for prop in data:
-            self.assertList(json, 'kinds')
-            self.assertTrue('name' in json)
-            self.assertTrue('value' in json)
-            self.assertTrue('scaType' in json)
-            self.assertTrue('mode' in json)
-            self.assertTrue('type' in json)
-            self.assertTrue('id' in json)
+            self.assertList(prop, 'kinds')
+            self.assertTrue('name' in prop)
+            self.assertTrue('value' in prop)
+            self.assertTrue('scaType' in prop)
+            self.assertTrue('mode' in prop)
+            self.assertTrue('type' in prop)
+            self.assertTrue('id' in prop)
