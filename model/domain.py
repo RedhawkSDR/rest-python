@@ -1,16 +1,15 @@
+"""
+REDHAWK Helper class used by the Server Handlers
+"""
+
 from ossie.utils import redhawk
 from ossie.utils.redhawk.channels import ODMListener
-from rest.helper import PropertyHelper, PortHelper
 
 __author__ = 'rpcanno'
 
 
 def scan_domains():
     return redhawk.scan()
-
-
-def _my_dir(obj):
-    return [m for m in dir(obj) if not m.startswith('__')]
 
 
 class ResourceNotFound(Exception):
@@ -40,7 +39,7 @@ class WaveformReleaseError(Exception):
         return "Not able to release waveform '%s'. %s" % (self.name, self.msg)
 
 
-class Domain(PropertyHelper, PortHelper):
+class Domain:
     domMgr_ptr = None
     odmListener = None
     eventHandlers = []
@@ -71,7 +70,7 @@ class Domain(PropertyHelper, PortHelper):
         self._connect_odm_listener()
 
     def properties(self):
-        props = self.format_properties(self.domMgr_ptr.query([]))  # TODO: self._propSet(self.domMgr_ptr._properties)
+        props = self.domMgr_ptr.query([])  # TODO: self.domMgr_ptr._properties
         return props
 
     def _domain(self):

@@ -7,10 +7,11 @@ DomainProperties -- Manipulate the properties of a domain
 """
 
 from handler import JsonHandler
+from helper import PropertyHelper
 from model.domain import Domain, scan_domains
 
 
-class DomainInfo(JsonHandler):
+class DomainInfo(JsonHandler, PropertyHelper):
     def get(self, domain_name=None):
         if domain_name:
             dom = Domain(str(domain_name))
@@ -19,7 +20,7 @@ class DomainInfo(JsonHandler):
             info = {
                 'id': dom_info._get_identifier(),
                 'name': dom_info.name,
-                'properties': dom.properties(),
+                'properties': self.format_properties(dom.properties()),
                 'waveforms': dom.apps(),
                 'deviceManagers': dom.device_managers()
             }
@@ -29,10 +30,10 @@ class DomainInfo(JsonHandler):
         self._render_json(info)
 
 
-class DomainProperties(JsonHandler):
+class DomainProperties(JsonHandler, PropertyHelper):
     def get(self, domain_name, prop_name=None):
         dom = Domain(str(domain_name))
-        info = dom.properties()
+        info = self.format_properties(dom.properties())
 
         if prop_name:
             value = None
