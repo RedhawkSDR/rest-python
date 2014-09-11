@@ -196,3 +196,30 @@ class Domain:
         for svc in svcs:
             ret_dict.append({'name': svc.name, 'id': svc._id})
             return ret_dict
+
+    @staticmethod
+    def locate(path, path_type):
+        '''
+            Locates a redhawk object with the given path, and path type. 
+            Returns the object + remaining path:
+
+               wf, opath = locate(ipath, 'waveform')
+
+
+            Valid path types are:
+                'waveform' - [ domain id, waveform-id ]
+                'component' - [ domain id, waveform-id, component-id ]
+                'device-mgr' - [ domain id, device-manager-id ]
+                'device' - [ domain id, device-manager-id, device-id ]
+        '''
+        domain = Domain(path[0])
+        if path_type == 'waveform':
+            return domain.find_app(path[1]), path[2:]
+        elif path_type == 'component':
+            return domain.find_component(path[1], path[2]), path[3:]
+        elif path_type == 'device-mgr':
+            return domain.find_device_manager(path[1]), path[2:]
+        elif path_type == 'device':
+            return domain.find_device(path[1], path[2]), path[3:]
+        raise ValueError("Bad path type %s.  Must be one of waveform, component, device-mgr or device" % path_type)
+

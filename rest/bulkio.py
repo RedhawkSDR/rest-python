@@ -14,6 +14,9 @@ from tornado import websocket
 from tornado import gen
 import gevent
 import threading
+from model.domain import Domain
+
+
 
 
 class BulkIOWebsocketHandler(websocket.WebSocketHandler):
@@ -22,11 +25,14 @@ class BulkIOWebsocketHandler(websocket.WebSocketHandler):
         self.kind = kind
 
     def open(self, *args):
-        logging.debug('Event handler open kind=%s, args=%s', self.kind, args)
-        print args
+        logging.debug("BulkIOWebsocketHandler open kind=%s, args=%s", self.kind, args)
+        obj, path = Domain.locate(args, path_type=self.kind)
+        logging.debug("Found object %s", dir(obj))
+        self.port = obj.getPort(path[0])
+        logging.debug("Found port %s", self.port)
 
     def on_message(self, message):
         logging.debug('stream message[%d]: %s', len(message), message)
 
     def on_close(self):
-        logging.debug('Stream CLOSE')    
+        logging.debug('Stream CLOSE')

@@ -34,11 +34,11 @@ _BULKIO_PATH = _PORT_PATH + _ID + r'/bulkio'
 
 class Application(tornado.web.Application):
     def __init__(self, *args, **kwargs):
-        cwd = os.getcwd()
+        cwd = os.path.abspath(os.path.dirname(__import__(__name__).__file__))
 
         handlers = [
             (r"/apps/(.*)/$", IndexHandler),
-            (r"/apps/(.*)", tornado.web.StaticFileHandler, {"path": cwd+"/apps"}),
+            (r"/apps/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(cwd,"apps")}),
 
             # Domains
             (_DOMAIN_PATH + _LIST, DomainInfo),
