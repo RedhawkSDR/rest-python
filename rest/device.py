@@ -8,6 +8,7 @@ Device -- Get info of a specific device
 from handler import JsonHandler
 from helper import PropertyHelper, PortHelper
 from model.domain import Domain
+from tornado import web
 
 
 class Devices(JsonHandler, PropertyHelper, PortHelper):
@@ -29,3 +30,10 @@ class Devices(JsonHandler, PropertyHelper, PortHelper):
             info = {'devices': dom.devices(dev_mgr_id)}
 
         self._render_json(info)
+
+
+class DeviceProperties(web.RequestHandler):
+
+    def get(self, *args):
+        self.set_status(500)
+        self.write(dict(status='Device Properties handler not implemented'))
