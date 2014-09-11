@@ -36,7 +36,7 @@ class RESTfulTest(AsyncHTTPTestCase, LogTrapTestCase):
 
 
     def get_app(self):
-        return Application(debug=True)
+        return Application(debug=True, _ioloop=self.io_loop)
 
     def test_domain_get(self):
         AsyncHTTPClient(self.io_loop).fetch(self.get_url('/rh/rest/domains'), self.stop)
@@ -70,6 +70,13 @@ class RESTfulTest(AsyncHTTPTestCase, LogTrapTestCase):
         conn1 = yield websocket.websocket_connect(url,
                                                   io_loop=self.io_loop) 
         msg = yield conn1.read_message()
+        try:
+            data = json.loads(msg)
+        except ValueError:
+            data = dict(data=msg)
+
+        if data.get('error', None):
+            self.fail('Recieved websockt error %s' % data)
         conn1.protocol.close()
 
 if __name__ == '__main__':

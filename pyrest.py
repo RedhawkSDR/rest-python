@@ -8,7 +8,7 @@ from rest.component import Component, ComponentProperties
 from rest.devicemanager import DeviceManagers
 from rest.device import Devices, DeviceProperties
 from rest.port import PortHandler
-from rest.bulkio import BulkIOWebsocketHandler
+from rest.bulkio_handler import BulkIOWebsocketHandler
 
 import tornado.httpserver
 import tornado.web
@@ -34,6 +34,8 @@ _BULKIO_PATH = _PORT_PATH + _ID + r'/bulkio'
 
 class Application(tornado.web.Application):
     def __init__(self, *args, **kwargs):
+        # explicit _ioloop for unit testing
+        _ioloop = kwargs.get('_ioloop', None)
         cwd = os.path.abspath(os.path.dirname(__import__(__name__).__file__))
 
         handlers = [
@@ -51,7 +53,7 @@ class Application(tornado.web.Application):
             (_WAVEFORM_PATH + _ID, Waveforms),
             (_WAVEFORM_PATH + _ID + _PORT_PATH + _LIST, PortHandler, dict(kind='waveform')),
             (_WAVEFORM_PATH + _ID + _PORT_PATH + _ID, PortHandler, dict(kind='waveform')),
-            (_WAVEFORM_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler, dict(kind='waveform')),
+            (_WAVEFORM_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler, dict(kind='waveform', _ioloop=_ioloop)),
 
             # Components
             (_COMPONENT_PATH + _LIST, Component),
@@ -60,7 +62,7 @@ class Application(tornado.web.Application):
             (_COMPONENT_PATH + _ID + _PROPERTIES_PATH + _ID, ComponentProperties),
             (_COMPONENT_PATH + _ID + _PORT_PATH + _LIST, PortHandler, dict(kind='component')),
             (_COMPONENT_PATH + _ID + _PORT_PATH + _ID, PortHandler, dict(kind='component')),
-            (_COMPONENT_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler, dict(kind='component')),
+            (_COMPONENT_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler, dict(kind='component', _ioloop=_ioloop)),
 
             # Device Managers
             (_DEVICE_MGR_PATH + _LIST, DeviceManagers),
@@ -73,7 +75,7 @@ class Application(tornado.web.Application):
             (_DEVICE_PATH + _ID + _PROPERTIES_PATH + _ID, DeviceProperties),
             (_DEVICE_PATH + _ID + _PORT_PATH + _LIST, PortHandler, dict(kind='device')),
             (_DEVICE_PATH + _ID + _PORT_PATH + _ID, PortHandler, dict(kind='device')),
-            (_DEVICE_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler, dict(kind='device')),
+            (_DEVICE_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler, dict(kind='device', _ioloop=_ioloop)),
         ]
         tornado.web.Application.__init__(self, handlers, *args, **kwargs)
 
