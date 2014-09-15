@@ -2,6 +2,7 @@
 REDHAWK Helper class used by the Server Handlers
 """
 
+import logging
 from ossie.utils import redhawk
 from ossie.utils.redhawk.channels import ODMListener
 
@@ -49,7 +50,8 @@ class Domain:
         self.name = domainname
         try:
             self._establish_domain()
-        except StandardError:
+        except StandardError, e:
+            logging.warn("Unable to find domain %s", e, exc_info=1)
             raise ResourceNotFound("domain", domainname)
 
     def _odm_response(self, event):
@@ -66,7 +68,7 @@ class Domain:
 
     def _establish_domain(self):
         redhawk.setTrackApps(False)
-        self.domMgr_ptr = redhawk.attach(self.name)
+        self.domMgr_ptr = redhawk.attach(str(self.name))
         self._connect_odm_listener()
 
     def properties(self):
@@ -198,7 +200,7 @@ class Domain:
             return ret_dict
 
     @staticmethod
-    def locate(path, path_type):
+    def locate_by_path(path, path_type):
         '''
             Locates a redhawk object with the given path, and path type. 
             Returns the object + remaining path:

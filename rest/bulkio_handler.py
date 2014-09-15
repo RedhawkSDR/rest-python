@@ -33,34 +33,17 @@ class BulkIOWebsocketHandler(websocket.WebSocketHandler):
         self._ioloop = _ioloop
 
 
-    def _pushSRI(self, SRI):
-        self._ioloop.add_callback(self.write_message, 
-            dict(hversion=SRI.hrversion,
-                xstart=SRI.xstart,
-                xdelta=SRI.xdelta,
-                xunits=SRI.xunits,
-                subsize=SRI.subsize,
-                ystart=SRI.ystart,
-                ydelta=SRI.ydelta,
-                yunits=SRI.yunits,
-                mode=SRI.mode,
-                streamID=SRI.streamID,
-                blocking=SRI.blocking))
-
-    def _pushPacket(self, data, ts, EOS, stream_id):
-        # FIXME: need to write ts, EOS and stream id
-        self._ioloop.add_callback(self.write_message, _floats2bin(data), binary=True)
-
     def open(self, *args):
         try:
-            logging.debug("BulkIOWebsocketHandler open kind=%s, args=%s", self.kind, args)
-            obj, path = Domain.locate(args, path_type=self.kind)
+            logging.debug("BulkIOWebsocketHandler open kind=%s, path=%s", self.kind, args)
+            obj, path = Domain.locate_by_path(args, path_type=self.kind)
             logging.debug("Found object %s", dir(obj))
             self.port = obj.getPort(path[0])
             logging.debug("Found port %s", self.port)
 
             self.async_port = AsyncPort(BULKIO__POA.dataFloat, self._pushSRI, self._pushPacket)
-            self.port.connectPort(self.async_port.getPort(), 'myport')
+            self._portname = 'myport%s' % id(self)
+            self.port.connectPort(self.async_port.getPort(), self._portname)
         except ResourceNotFound, e:
             self.write_message(dict(error='ResourceNotFound', message=str(e)))
             self.close()
@@ -75,3 +58,37 @@ class BulkIOWebsocketHandler(websocket.WebSocketHandler):
 
     def on_close(self):
         logging.debug('Stream CLOSE')
+        try:
+            self.port.disconnectPort(self._portname)
+        except Exception, e:
+            logging.exception('Error disconnecting port %s' % self._portname)
+
+
+
+    def _pushSRI(self, SRI):
+        self._ioloop.add_callback(self.write_message, 
+            dict(hversion=SRI.hversion,
+                xstart=SRI.xstart,
+                xdelta=SRI.xdelta,
+                xunits=SRI.xunits,
+                subsize=SRI.subsize,
+                ystart=SRI.ystart,
+                ydelta=SRI.ydelta,
+                yunits=SRI.yunits,
+                mode=SRI.mode,
+                streamID=SRI.streamID,
+                blocking=SRI.blocking,
+                keywords=dict(((kw.id, kw.value.value()) for kw in SRI.keywords))))
+
+    def _pushPacket(self, data, ts, EOS, stream_id):
+
+        # FIXME: need to write ts, EOS and stream id
+        self._ioloop.add_callback(self.write_message, _floats2bin(data), binary=True)
+
+
+    def write_message(self, *args, **ioargs):
+        # hide WebSocketClosedError because it's very likely
+        try:
+            super(BulkIOWebsocketHandler, self).write_message(*args, **ioargs)
+        except websocket.WebSocketClosedError:
+            logging.debug('Received WebSocketClosedError. Ignoring')

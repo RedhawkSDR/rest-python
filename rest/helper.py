@@ -103,11 +103,12 @@ class PortHelper(object):
 
     @staticmethod
     def format_ports(ports):
-        port_dict = []
-        for port in ports:
-            port_value = {'name': port.name, 'direction': port._direction}
-            if port._direction == 'Uses':
-                port_value['type'] = port._using.name
-                port_value['namespace'] = port._using.nameSpace
-            port_dict.append(port_value)
-        return port_dict
+        return [ format_port(port) for port in ports ]
+
+    @staticmethod
+    def format_port(port):
+        port_value = {'name': port.name, 'direction': port._direction}
+        if port._direction == 'Uses':
+            port_value['type'] = port._using.name
+            port_value['namespace'] = port._using.nameSpace
+        return port_value
