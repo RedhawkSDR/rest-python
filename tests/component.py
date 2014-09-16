@@ -3,12 +3,15 @@ Tornado tests for the /domain/{NAME}/waveforms/{ID}/components portion of the RE
 """
 __author__ = 'rpcanno'
 
+from pyrest import Application
 from base import JsonTests
 from defaults import Default
 
 
 class ComponentTests(JsonTests):
-    def _setUp(self):
+
+    def setUp(self):
+        super(ComponentTests, self).setUp()
         json, resp = self._json_request(
             '/domains/%s/waveforms' % Default.DOMAIN_NAME,
             200,
@@ -24,25 +27,22 @@ class ComponentTests(JsonTests):
 
         self.components = json['components']
 
-    def _tearDown(self):
+    def tearDown(self):
         self._json_request(
             self.base_url,
             200,
             'DELETE'
         )
+        super(ComponentTests, self).tearDown()
 
     def _get_comps(self):
         pass
 
     def test_list(self):
-        self._setUp()
-
         json, resp = self._json_request(self.base_url + '/components', 200)
 
         self.assertIdList(json, 'components')
         self.assertEquals(self.components, json['components'])
-
-        self._tearDown()
 
     def test_info(self):
         self._setUp()
@@ -70,8 +70,6 @@ class ComponentTests(JsonTests):
         self._tearDown()
 
     def test_properties(self):
-        self._setUp()
-
         comp_id = self.components[0]['id']
         json, resp = self._json_request('%s/components/%s' % (self.base_url, comp_id), 200)
         properties = json['properties']
@@ -106,5 +104,3 @@ class ComponentTests(JsonTests):
             if p['id'] == Default.COMPONENT_PROPERTY:
                 prop = p
         self.assertEquals(prop['value'], Default.COMPONENT_PROPERTY_CHANGE)
-
-        self._tearDown()

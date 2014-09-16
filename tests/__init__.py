@@ -17,3 +17,5 @@ from devicemanager import DeviceManagerTests
 from device import DeviceTests
 from waveform import WaveformTests
 from component import ComponentTests
+from bulkio import BulkIOTests
+from port import PortTests
