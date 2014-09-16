@@ -18,7 +18,7 @@ from tornado import ioloop
 # setup command line options
 from tornado.options import define, options
 
-define('port', default=8080, type='int', help="server port")
+define('port', default=8080, type=int, help="server port")
 define("debug", default=False, type=bool, help="Enable Tornado debug mode.  Reloads code")
 
 _ID = r'/([^/]+)'
@@ -31,6 +31,7 @@ _DEVICE_PATH = _DEVICE_MGR_PATH + _ID + r'/devices'
 _PROPERTIES_PATH = r'/properties'
 _PORT_PATH = r'/ports'
 _BULKIO_PATH = _PORT_PATH + _ID + r'/bulkio'
+
 
 class Application(tornado.web.Application):
     def __init__(self, *args, **kwargs):
