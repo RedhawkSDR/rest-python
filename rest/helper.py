@@ -103,7 +103,7 @@ class PortHelper(object):
 
     @staticmethod
     def format_ports(ports):
-        return [ format_port(port) for port in ports ]
+        return [PortHelper.format_port(port) for port in ports]
 
     @staticmethod
     def format_port(port):
