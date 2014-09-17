@@ -45,8 +45,6 @@ class ComponentTests(JsonTests):
         self.assertEquals(self.components, json['components'])
 
     def test_info(self):
-        self._setUp()
-
         comp_id = self.components[0]['id']
         json, resp = self._json_request('%s/components/%s' % (self.base_url, comp_id), 200)
 
@@ -58,16 +56,10 @@ class ComponentTests(JsonTests):
         self.assertList(json, 'properties')
         self.assertProperties(json['properties'])
 
-        self._tearDown()
-
     def test_not_found(self):
-        self._setUp()
-
         json, resp = self._json_request('%s/components/ggsdfgfdg' % self.base_url, 404)
 
         self._resource_not_found(json)
-
-        self._tearDown()
 
     def test_properties(self):
         comp_id = self.components[0]['id']
@@ -85,10 +77,7 @@ class ComponentTests(JsonTests):
                 prop = p
         self.assertEquals(prop['value'], Default.COMPONENT_PROPERTY_VALUE)
 
-        # TODO: Configure
-        new_props = {'properties': [
-            {'id': Default.COMPONENT_PROPERTY, 'value': Default.COMPONENT_PROPERTY_CHANGE}
-        ]}
+        # Configure
         json, resp = self._json_request(
             "%s/components/%s/properties" % (self.base_url, comp_id),
             200,
