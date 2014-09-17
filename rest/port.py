@@ -23,7 +23,13 @@ class PortHandler(web.RequestHandler, PortHelper):
             obj, path = Domain.locate_by_path(args, path_type=self.kind)
             logging.debug("Found object %s", dir(obj))
             if path:
-                self.write(json.dumps(self.format_port(obj.getPort(path[0]))))
+                name = path[0]
+                for port in obj.ports:
+                    if port.name == name:
+                        self.write(json.dumps(self.format_port(port)))
+                        break
+                else:
+                    raise ResourceNotFound('port', name)
             else:
                 self.write(json.dumps(self.format_ports(obj.ports)))
         except ResourceNotFound, e:
