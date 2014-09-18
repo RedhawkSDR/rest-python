@@ -72,8 +72,8 @@ class BulkIOWebsocketHandler(websocket.WebSocketHandler):
                             raise ValueError("Port '%s' is not a BULKIO port" % path[0])
                     else:
                         raise ValueError("Port '%s' is not a uses" % path[0])
-                else:
-                    raise ValueError("Could not find port of name '%s'" % path[0])
+            else:
+                raise ValueError("Could not find port of name '%s'" % path[0])
 
         except ResourceNotFound, e:
             self.write_message(dict(error='ResourceNotFound', message=str(e)))
