@@ -23,6 +23,7 @@ class Waveforms(JsonHandler, PropertyHelper, PortHelper):
             info =  {
                 'id': app._get_identifier(),
                 'name': app.name,
+                'started': app._get_started(),
                 'components': dom.components(app_id),
                 'ports': self.format_ports(app.ports),
                 'properties': self.format_properties(app._properties)
@@ -32,15 +33,44 @@ class Waveforms(JsonHandler, PropertyHelper, PortHelper):
 
         self._render_json(info)
 
-    def post(self, domain_name):
+    def post(self, domain_name, app_id=None):
+        data = json.loads(self.request.body)
+        dom = Domain(str(domain_name))
+
+        if app_id:
+            app = dom.find_app(app_id)
+
+            started = data['started']
+            if started:
+                app.start()
+            else:
+                app.stop()
+
+            self._render_json({'id': app_id, 'started': app._get_started()})
+        else:
+            app_name = data['name']
+
+            app_id = dom.launch(str(app_name))
+
+            if 'started' in data and data['started']:
+                app = dom.find_app(app_id)
+                app.start()
+
+            self._render_json({'launched': app_id, 'waveforms': dom.apps()})
+
+    def put(self, domain_name, app_id=None):
         data = json.loads(self.request.body)
 
-        app_name = data['name']
-
         dom = Domain(str(domain_name))
-        app_id = dom.launch(str(app_name))
+        app = dom.find_app(app_id)
 
-        self._render_json({'launched': app_id, 'waveforms': dom.apps()})
+        started = data['started']
+        if started:
+            app.start()
+        else:
+            app.stop()
+
+        self._render_json({'id': app_id, 'started': app._get_started()})
 
     def delete(self, domain_name, app_id):
         dom = Domain(str(domain_name))

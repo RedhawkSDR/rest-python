@@ -23,6 +23,7 @@ class Component(JsonHandler, PropertyHelper, PortHelper):
             info = {
                 'name': comp.name,
                 'id': comp._id,
+                'started': comp._get_started(),
                 'ports': self.format_ports(comp.ports),
                 'properties': self.format_properties(comp._properties)
             }
