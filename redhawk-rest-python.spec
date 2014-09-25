@@ -37,6 +37,7 @@ Requires:       redhawk >= 1.10
 Requires:       redhawk-devel
 Requires:       bulkioInterfaces
 Requires:       redhawk-web
+Requires:       rhweb-python-tornado
 
 %description
 %{summary}
@@ -59,20 +60,12 @@ mkdir -p $RPM_BUILD_ROOT%{_app}/rest
 cp rest/*.py $RPM_BUILD_ROOT%{_app}/rest
 
 cp start.sh          $RPM_BUILD_ROOT%{_app}
-cp pyvenv            $RPM_BUILD_ROOT%{_app}
-cp setup.sh          $RPM_BUILD_ROOT%{_app}
 
 mkdir -p $RPM_BUILD_ROOT%{_supervisor}
 cp deploy/rest-python-supervisor.conf $RPM_BUILD_ROOT%{_supervisor}/redhawk-rest-python.conf
 
 mkdir -p $RPM_BUILD_ROOT%{_nginx}/redhawk-sites
 cp deploy/rest-python-nginx.conf $RPM_BUILD_ROOT%{_nginx}/rest-python.enabled
-
-%post
-$RPM_BUILD_ROOT%{_app}/setup.sh install
-
-%preun
-$RPM_BUILD_ROOT%{_app}/setup.sh uninstall
 
 %clean
 rm -rf %{buildroot}
@@ -81,8 +74,6 @@ rm -rf %{buildroot}
 %defattr(-,redhawk,redhawk,-)
 %dir %{_app}
 %{_app}/start.sh
-%{_app}/setup.sh
-%{_app}/pyvenv
 
 %{_app}/pyrest.py
 %{_app}/pyrest.pyc
