@@ -18,8 +18,6 @@ case "$1" in
 
     virtualenv --system-site-packages ${venv}
     ${pyvenv} easy_install "tornado==4.0.1"
-
-    chown -R redhawk:redhawk ${venv}
   ;;
 
   uninstall)
