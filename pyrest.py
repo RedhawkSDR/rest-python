@@ -19,7 +19,6 @@
 # along with this program.  If not, see http://www.gnu.org/licenses/.
 #
 import os
-from optparse import OptionParser
 
 from rest.domain import DomainInfo, DomainProperties
 from rest.waveform import Waveforms
@@ -33,6 +32,8 @@ import tornado.httpserver
 import tornado.web
 import tornado.websocket
 from tornado import ioloop
+
+from model.redhawk import Redhawk
 
 # setup command line options
 from tornado.options import define, options
@@ -58,41 +59,44 @@ class Application(tornado.web.Application):
         _ioloop = kwargs.get('_ioloop', None)
         cwd = os.path.abspath(os.path.dirname(__import__(__name__).__file__))
 
+        # REDHAWK Service
+        redhawk = Redhawk()
+
         handlers = [
             (r"/apps/(.*)/$", IndexHandler),
-            (r"/apps/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(cwd,"apps")}),
+            (r"/apps/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(cwd, "apps")}),
 
             # Domains
-            (_DOMAIN_PATH + _LIST, DomainInfo),
-            (_DOMAIN_PATH + _ID, DomainInfo),
-            (_DOMAIN_PATH + _ID + _PROPERTIES_PATH + _LIST, DomainProperties),
-            (_DOMAIN_PATH + _ID + _PROPERTIES_PATH + _ID, DomainProperties),
+            (_DOMAIN_PATH + _LIST, DomainInfo, dict(redhawk=redhawk)),
+            (_DOMAIN_PATH + _ID, DomainInfo, dict(redhawk=redhawk)),
+            (_DOMAIN_PATH + _ID + _PROPERTIES_PATH + _LIST, DomainProperties, dict(redhawk=redhawk)),
+            (_DOMAIN_PATH + _ID + _PROPERTIES_PATH + _ID, DomainProperties, dict(redhawk=redhawk)),
 
             # Waveforms
-            (_WAVEFORM_PATH + _LIST, Waveforms),
-            (_WAVEFORM_PATH + _ID, Waveforms),
+            (_WAVEFORM_PATH + _LIST, Waveforms, dict(redhawk=redhawk)),
+            (_WAVEFORM_PATH + _ID, Waveforms, dict(redhawk=redhawk)),
             (_WAVEFORM_PATH + _ID + _PORT_PATH + _LIST, PortHandler, dict(kind='waveform')),
             (_WAVEFORM_PATH + _ID + _PORT_PATH + _ID, PortHandler, dict(kind='waveform')),
             (_WAVEFORM_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler, dict(kind='waveform', _ioloop=_ioloop)),
 
             # Components
-            (_COMPONENT_PATH + _LIST, Component),
-            (_COMPONENT_PATH + _ID, Component),
-            (_COMPONENT_PATH + _ID + _PROPERTIES_PATH + _LIST, ComponentProperties),
-            (_COMPONENT_PATH + _ID + _PROPERTIES_PATH + _ID, ComponentProperties),
+            (_COMPONENT_PATH + _LIST, Component, dict(redhawk=redhawk)),
+            (_COMPONENT_PATH + _ID, Component, dict(redhawk=redhawk)),
+            (_COMPONENT_PATH + _ID + _PROPERTIES_PATH + _LIST, ComponentProperties, dict(redhawk=redhawk)),
+            (_COMPONENT_PATH + _ID + _PROPERTIES_PATH + _ID, ComponentProperties, dict(redhawk=redhawk)),
             (_COMPONENT_PATH + _ID + _PORT_PATH + _LIST, PortHandler, dict(kind='component')),
             (_COMPONENT_PATH + _ID + _PORT_PATH + _ID, PortHandler, dict(kind='component')),
             (_COMPONENT_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler, dict(kind='component', _ioloop=_ioloop)),
 
             # Device Managers
-            (_DEVICE_MGR_PATH + _LIST, DeviceManagers),
-            (_DEVICE_MGR_PATH + _ID, DeviceManagers),
+            (_DEVICE_MGR_PATH + _LIST, DeviceManagers, dict(redhawk=redhawk)),
+            (_DEVICE_MGR_PATH + _ID, DeviceManagers, dict(redhawk=redhawk)),
 
             # Devices
-            (_DEVICE_PATH + _LIST, Devices),
-            (_DEVICE_PATH + _ID, Devices),
-            (_DEVICE_PATH + _ID + _PROPERTIES_PATH + _LIST, DeviceProperties),
-            (_DEVICE_PATH + _ID + _PROPERTIES_PATH + _ID, DeviceProperties),
+            (_DEVICE_PATH + _LIST, Devices, dict(redhawk=redhawk)),
+            (_DEVICE_PATH + _ID, Devices, dict(redhawk=redhawk)),
+            (_DEVICE_PATH + _ID + _PROPERTIES_PATH + _LIST, DeviceProperties, dict(redhawk=redhawk)),
+            (_DEVICE_PATH + _ID + _PROPERTIES_PATH + _ID, DeviceProperties, dict(redhawk=redhawk)),
             (_DEVICE_PATH + _ID + _PORT_PATH + _LIST, PortHandler, dict(kind='device')),
             (_DEVICE_PATH + _ID + _PORT_PATH + _ID, PortHandler, dict(kind='device')),
             (_DEVICE_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler, dict(kind='device', _ioloop=_ioloop)),

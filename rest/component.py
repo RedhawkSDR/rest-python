@@ -24,20 +24,19 @@ Classes:
 Component -- Get info about a specific component
 ComponentProperties -- Manipulate properties of a specific component
 """
+from tornado import gen
 
 from handler import JsonHandler
 from helper import PropertyHelper, PortHelper
-from model.domain import Domain
 
 import json
 
 
 class Component(JsonHandler, PropertyHelper, PortHelper):
+    @gen.coroutine
     def get(self, domain_name, app_id, comp_id=None):
-        dom = Domain(str(domain_name))
-
         if comp_id:
-            comp = dom.find_component(app_id, comp_id)
+            comp = yield self.redhawk.get_component(domain_name, app_id, comp_id)
 
             info = {
                 'name': comp.name,
@@ -47,36 +46,27 @@ class Component(JsonHandler, PropertyHelper, PortHelper):
                 'properties': self.format_properties(comp._properties)
             }
         else:
-            info = {'components': dom.components(app_id)}
+            comps = yield self.redhawk.get_component_list(domain_name, app_id)
+            info = {'components': comps}
 
         self._render_json(info)
 
 
 class ComponentProperties(JsonHandler, PropertyHelper):
-    def get(self, domain, waveform, component):
-        dom = Domain(str(domain))
-        comp = dom.find_component(waveform, component)
+    @gen.coroutine
+    def get(self, domain, application, component):
+        comp = yield self.redhawk.get_component(domain, application, component)
 
         self._render_json({
             'properties': self.format_properties(comp._properties)
         })
 
-    def put(self, domain, waveform, component):
+    @gen.coroutine
+    def put(self, domain, application, component):
         data = json.loads(self.request.body)
-
-        dom = Domain(str(domain))
-        comp = dom.find_component(waveform, component)
 
         changes = {}
         for p in data['properties']:
             changes[p['id']] = p['value']
 
-        configure_changes = {}
-        for prop in comp._properties:
-            if prop.id in changes:
-                if changes[prop.id] != prop.queryValue():
-                    print "New Value", changes[prop.id], '->', prop.queryValue()
-                    configure_changes[prop.id] = (type(prop.queryValue()))(changes[prop.id])
-
-        print configure_changes
-        comp.configure(configure_changes)
+        yield self.redhawk.component_configure(domain, application, component, changes)

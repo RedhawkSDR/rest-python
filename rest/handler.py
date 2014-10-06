@@ -29,6 +29,11 @@ from model.domain import ResourceNotFound
 
 
 class JsonHandler(tornado.web.RequestHandler):
+    redhawk = None
+
+    def initialize(self, redhawk):
+        self.redhawk = redhawk
+
     def _handle_request_exception(self, e):
         print 'Exception::', e
 

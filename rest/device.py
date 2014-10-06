@@ -24,29 +24,29 @@ Classes:
 Device -- Get info of a specific device
 """
 
+from tornado import gen
+
 from handler import JsonHandler
 from helper import PropertyHelper, PortHelper
-from model.domain import Domain
 from tornado import web
 
 
 class Devices(JsonHandler, PropertyHelper, PortHelper):
+    @gen.coroutine
     def get(self, domain_name, dev_mgr_id, dev_id=None):
-        dom = Domain(str(domain_name))
-
         if dev_id:
-            dev = dom.find_device(dev_mgr_id, dev_id)
+            dev = yield self.redhawk.get_device(domain_name, dev_mgr_id, dev_id)
 
             info = {
                 'name': dev.name,
                 'id': dev._id,
                 'started': dev._get_started(),
                 'ports': self.format_ports(dev.ports),
-                # 'properties': self.format_properties(dev.query([])),
                 'properties': self.format_properties(dev._properties)
             }
         else:
-            info = {'devices': dom.devices(dev_mgr_id)}
+            devices = yield self.redhawk.get_device_list(domain_name, dev_mgr_id)
+            info = {'devices': devices}
 
         self._render_json(info)
 

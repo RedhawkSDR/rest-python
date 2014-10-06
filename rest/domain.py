@@ -25,34 +25,40 @@ DomainInfo -- Get info of all or a specific domain
 DomainProperties -- Manipulate the properties of a domain
 """
 
+from tornado import gen
+
 from handler import JsonHandler
 from helper import PropertyHelper
-from model.domain import Domain, scan_domains
 
 
 class DomainInfo(JsonHandler, PropertyHelper):
+    @gen.coroutine
     def get(self, domain_name=None):
         if domain_name:
-            dom = Domain(str(domain_name))
-            dom_info = dom._domain()
+            dom_info = yield self.redhawk.get_domain_info(domain_name)
+            properties = yield self.redhawk.get_domain_properties(domain_name)
+            apps = yield self.redhawk.get_application_list(domain_name)
+            device_managers = yield self.redhawk.get_device_manager_list(domain_name)
 
             info = {
                 'id': dom_info._get_identifier(),
                 'name': dom_info.name,
-                'properties': self.format_properties(dom.properties()),
-                'waveforms': dom.apps(),
-                'deviceManagers': dom.device_managers()
+                'properties': self.format_properties(properties),
+                'waveforms': apps,
+                'deviceManagers': device_managers
             }
 
         else:
-            info = {'domains': scan_domains()}
+            domains = yield self.redhawk.get_domain_list()
+            info = {'domains': domains}
         self._render_json(info)
 
 
 class DomainProperties(JsonHandler, PropertyHelper):
+    @gen.coroutine
     def get(self, domain_name, prop_name=None):
-        dom = Domain(str(domain_name))
-        info = self.format_properties(dom.properties())
+        properties = yield self.redhawk.get_domain_properties(domain_name)
+        info = self.format_properties(properties)
 
         if prop_name:
             value = None

@@ -25,8 +25,6 @@ import logging
 from ossie.utils import redhawk
 from ossie.utils.redhawk.channels import ODMListener
 
-__author__ = 'rpcanno'
-
 
 def scan_domains():
     return redhawk.scan()
@@ -94,13 +92,13 @@ class Domain:
         props = self.domMgr_ptr.query([])  # TODO: self.domMgr_ptr._properties
         return props
 
-    def _domain(self):
+    def get_domain_info(self):
         if self.domMgr_ptr:
             return self.domMgr_ptr
         raise ResourceNotFound('domain', self.name)
 
     def find_app(self, app_id=None):
-        _dom = self._domain()
+        _dom = self.get_domain_info()
         apps = _dom.apps
 
         if not app_id:
@@ -123,7 +121,7 @@ class Domain:
         raise ResourceNotFound('component', comp_id)
 
     def find_device_manager(self, device_manager_id=None):
-        _dom = self._domain()
+        _dom = self.get_domain_info()
 
         if not device_manager_id:
             return _dom.devMgrs
@@ -170,7 +168,7 @@ class Domain:
         return comps_dict
 
     def launch(self, app_name):
-        _dom = self._domain()
+        _dom = self.get_domain_info()
         try:
             app = _dom.createApplication(app_name)
             return app._get_identifier()
@@ -186,7 +184,7 @@ class Domain:
             raise WaveformReleaseError(app_id, str(e))
 
     def available_apps(self):
-        _dom = self._domain()
+        _dom = self.get_domain_info()
         sads_full_path = _dom.catalogSads()
         sads = _dom._sads
         sad_ret = []

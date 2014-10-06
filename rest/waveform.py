@@ -24,40 +24,44 @@ Classes:
 Waveforms -- Get info, launch and release
 """
 
+from tornado import gen
+
 from handler import JsonHandler
 from helper import PropertyHelper, PortHelper
-from model.domain import Domain
 
 import json
 
 
 class Waveforms(JsonHandler, PropertyHelper, PortHelper):
-
+    @gen.coroutine
     def get(self, domain_name, app_id=None):
-        dom = Domain(str(domain_name))
 
         if app_id:
-            app = dom.find_app(app_id)
+            app = yield self.redhawk.get_application(domain_name, app_id)
+            comps = yield self.redhawk.get_component_list(domain_name, app_id)
 
-            info =  {
+            info = {
                 'id': app._get_identifier(),
                 'name': app.name,
                 'started': app._get_started(),
-                'components': dom.components(app_id),
+                'components': comps,
                 'ports': self.format_ports(app.ports),
                 'properties': self.format_properties(app._properties)
             }
         else:
-            info = {'waveforms': dom.apps(), 'available': dom.available_apps()}
+            wfs = yield self.redhawk.get_application_list(domain_name)
+            avail = yield self.redhawk.get_available_applications(domain_name)
+
+            info = {'waveforms': wfs, 'available': avail}
 
         self._render_json(info)
 
+    @gen.coroutine
     def post(self, domain_name, app_id=None):
         data = json.loads(self.request.body)
-        dom = Domain(str(domain_name))
 
         if app_id:
-            app = dom.find_app(app_id)
+            app = yield self.redhawk.get_application(domain_name, app_id)
 
             started = data['started']
             if started:
@@ -67,21 +71,22 @@ class Waveforms(JsonHandler, PropertyHelper, PortHelper):
 
             self._render_json({'id': app_id, 'started': app._get_started()})
         else:
-            app_name = data['name']
+            app_name = str(data['name'])
 
-            app_id = dom.launch(str(app_name))
+            app_id = yield self.redhawk.launch_application(domain_name, app_name)
+            apps = yield self.redhawk.get_application_list(domain_name)
 
             if 'started' in data and data['started']:
-                app = dom.find_app(app_id)
+                app = yield self.redhawk.get_application(domain_name, app_id)
                 app.start()
 
-            self._render_json({'launched': app_id, 'waveforms': dom.apps()})
+            self._render_json({'launched': app_id, 'waveforms': apps})
 
+    @gen.coroutine
     def put(self, domain_name, app_id=None):
         data = json.loads(self.request.body)
 
-        dom = Domain(str(domain_name))
-        app = dom.find_app(app_id)
+        app = yield self.redhawk.get_application(domain_name, app_id)
 
         started = data['started']
         if started:
@@ -91,8 +96,9 @@ class Waveforms(JsonHandler, PropertyHelper, PortHelper):
 
         self._render_json({'id': app_id, 'started': app._get_started()})
 
+    @gen.coroutine
     def delete(self, domain_name, app_id):
-        dom = Domain(str(domain_name))
-        dom.release(app_id)
+        yield self.redhawk.release_application(domain_name, app_id)
+        apps = yield self.redhawk.get_application_list(domain_name)
 
-        self._render_json({'released': app_id, 'waveforms': dom.apps()})
+        self._render_json({'released': app_id, 'waveforms': apps})

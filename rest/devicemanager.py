@@ -24,27 +24,33 @@ Classes:
 DeviceManagers -- Get info of all or a specific device manager
 """
 
+from tornado import gen
+
 from handler import JsonHandler
 from helper import PropertyHelper, PortHelper
-from model.domain import Domain
 
 
 class DeviceManagers(JsonHandler, PropertyHelper, PortHelper):
+    @gen.coroutine
     def get(self, domain_name, dev_mgr_id=None):
-        dom = Domain(str(domain_name))
 
         if dev_mgr_id:
-            dev_mgr = dom.find_device_manager(dev_mgr_id)
+            dev_mgr = yield self.redhawk.get_device_manager(domain_name, dev_mgr_id)
+            services = yield self.redhawk.get_service_list(domain_name, dev_mgr_id)
+            devices = yield self.redhawk.get_device_list(domain_name, dev_mgr_id)
 
-            prop_dict = self.format_properties(dev_mgr.query([]))  # TODO: self._propSet(devMgr._properties)
+            # TODO: Find out why _properties is not in device manager
+            prop_dict = self.format_properties(dev_mgr.query([]))
+
             info = {
                 'name': dev_mgr.name,
                 'id': dev_mgr.id,
                 'properties': prop_dict,
-                'devices': dom.devices(dev_mgr_id),
-                'services': dom.services(dev_mgr_id)
+                'devices': devices,
+                'services': services
             }
         else:
-            info = {'deviceManagers': dom.device_managers()}
+            managers = yield self.redhawk.get_device_manager_list(domain_name)
+            info = {'deviceManagers': managers}
 
         self._render_json(info)
