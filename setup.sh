@@ -36,7 +36,7 @@ case "$1" in
     fi
 
     virtualenv --system-site-packages ${venv}
-    ${pyvenv} easy_install "tornado==4.0.1"
+    ${pyvenv} pip install -r requirements.txt
   ;;
 
   uninstall)
