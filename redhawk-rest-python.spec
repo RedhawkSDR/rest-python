@@ -53,8 +53,10 @@ Requires:       rhweb-python-tornado
 mkdir -p $RPM_BUILD_ROOT%{_app}
 cp pyrest.py         $RPM_BUILD_ROOT%{_app}
 
-mkdir -p $RPM_BUILD_ROOT%{_app}/model
-cp model/*.py $RPM_BUILD_ROOT%{_app}/model
+mkdir -p $RPM_BUILD_ROOT%{_app}/model/_utils
+cp model/*.py        $RPM_BUILD_ROOT%{_app}/model
+cp model/_utils/*.py $RPM_BUILD_ROOT%{_app}/model/_utils
+
 
 mkdir -p $RPM_BUILD_ROOT%{_app}/rest
 cp rest/*.py $RPM_BUILD_ROOT%{_app}/rest
@@ -79,6 +81,7 @@ rm -rf %{buildroot}
 %{_app}/pyrest.pyc
 %{_app}/pyrest.pyo
 %{_app}/model
+%{_app}/model/_utils
 %{_app}/rest
 
 %defattr(-,root,root,-)
