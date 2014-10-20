@@ -48,11 +48,16 @@ def _doubles2bin(flist):
     return numpy.array(flist).astype('float64').tostring()
 
 
+def _pass_through(flist):
+    return flist
+
+
 class BulkIOWebsocketHandler(websocket.WebSocketHandler):
 
     data_conversion_map = {
         'dataFloat':  _floats2bin,
-        'dataDouble': _doubles2bin
+        'dataDouble': _doubles2bin,
+        'dataOctet': _pass_through
     }
 
     def initialize(self, kind, _ioloop=None):
