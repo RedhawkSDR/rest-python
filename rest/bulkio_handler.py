@@ -57,7 +57,8 @@ class BulkIOWebsocketHandler(websocket.WebSocketHandler):
     data_conversion_map = {
         'dataFloat':  _floats2bin,
         'dataDouble': _doubles2bin,
-        'dataOctet': _pass_through
+        'dataOctet': _pass_through,
+        'dataShort': _pass_through
     }
 
     def initialize(self, kind, _ioloop=None):
