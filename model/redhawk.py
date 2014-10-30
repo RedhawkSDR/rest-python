@@ -34,10 +34,11 @@ class Redhawk(object):
 
     def _get_domain(self, domain_name):
         name = str(domain_name)
-        if not name in self.__domains:
-            self.__domains[name] = Domain(domain_name)
-
-        return self.__domains[name]
+        # if not name in self.__domains:
+        #     self.__domains[name] = Domain(domain_name)
+        #
+        # return self.__domains[name]
+        return Domain(domain_name)
 
     ##############################
     # DOMAIN
