@@ -213,7 +213,7 @@ class Domain:
         svcs = self.find_service(dev_mgr_id)
         ret_dict = []
         for svc in svcs:
-            ret_dict.append({'name': svc.name, 'id': svc._id})
+            ret_dict.append({'name': svc._instanceName, 'id': svc._refid})
             return ret_dict
 
     @staticmethod
