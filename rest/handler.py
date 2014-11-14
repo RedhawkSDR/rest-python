@@ -23,7 +23,7 @@ Rest handlers
 Classes:
 JsonHandler -- Handle generic functions of a json rest interface
 """
-
+import logging
 import tornado.web
 from model.domain import ResourceNotFound
 
@@ -35,7 +35,7 @@ class JsonHandler(tornado.web.RequestHandler):
         self.redhawk = redhawk
 
     def _handle_request_exception(self, e):
-        print 'Exception::', e
+        logging.error('Exception:: %s', e, exc_info=1)
 
         status = 500
         resp = {'message': str(e), 'error': type(e).__name__}
