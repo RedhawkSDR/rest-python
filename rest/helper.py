@@ -128,6 +128,13 @@ class PortHelper(object):
     def format_port(port):
         port_value = {'name': port.name, 'direction': port._direction}
         if port._direction == 'Uses':
-            port_value['type'] = port._using.name
-            port_value['namespace'] = port._using.nameSpace
+            versionIdx = port.using.repoId.rfind(':')
+            version = port.using.repoId[versionIdx:]
+
+            port_value['repId'] = port.using.repoId
+            port_value['idl'] = {
+                'type': port._using.name,
+                'namespace': port._using.nameSpace,
+                'version': version
+            }
         return port_value
