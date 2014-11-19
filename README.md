@@ -20,7 +20,7 @@ REDHAWK REST Python is licensed under the GNU Lesser General Public License (LGP
 
 For Development/Test environments there are scripts to automatically create a local environment and run the server.
 
-    ./setup.py install
+    ./setup.sh install
     ./start.sh --port=<desired_port>
 
 The tools above will create a virtual environment in the current directory.
