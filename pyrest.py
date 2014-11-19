@@ -43,8 +43,8 @@ define("debug", default=False, type=bool, help="Enable Tornado debug mode.  Relo
 
 _ID = r'/([^/]+)'
 _LIST = r'/?'
-_DOMAIN_PATH = r'/rh/rest/domains'
-_WAVEFORM_PATH = _DOMAIN_PATH + _ID + r'/waveforms'
+_DOMAIN_PATH = r'/redhawk/rest/domains'
+_WAVEFORM_PATH = _DOMAIN_PATH + _ID + r'/applications'
 _COMPONENT_PATH = _WAVEFORM_PATH + _ID + r'/components'
 _DEVICE_MGR_PATH = _DOMAIN_PATH + _ID + r'/deviceManagers'
 _DEVICE_PATH = _DEVICE_MGR_PATH + _ID + r'/devices'
