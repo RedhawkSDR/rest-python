@@ -21,7 +21,7 @@
 import os
 
 from rest.domain import DomainInfo, DomainProperties
-from rest.waveform import Waveforms
+from rest.application import Applications
 from rest.component import Component, ComponentProperties
 from rest.devicemanager import DeviceManagers
 from rest.device import Devices, DeviceProperties
@@ -44,8 +44,8 @@ define("debug", default=False, type=bool, help="Enable Tornado debug mode.  Relo
 _ID = r'/([^/]+)'
 _LIST = r'/?'
 _DOMAIN_PATH = r'/redhawk/rest/domains'
-_WAVEFORM_PATH = _DOMAIN_PATH + _ID + r'/applications'
-_COMPONENT_PATH = _WAVEFORM_PATH + _ID + r'/components'
+_APPLICATION_PATH = _DOMAIN_PATH + _ID + r'/applications'
+_COMPONENT_PATH = _APPLICATION_PATH + _ID + r'/components'
 _DEVICE_MGR_PATH = _DOMAIN_PATH + _ID + r'/deviceManagers'
 _DEVICE_PATH = _DEVICE_MGR_PATH + _ID + r'/devices'
 _PROPERTIES_PATH = r'/properties'
@@ -72,12 +72,12 @@ class Application(tornado.web.Application):
             (_DOMAIN_PATH + _ID + _PROPERTIES_PATH + _LIST, DomainProperties, dict(redhawk=redhawk)),
             (_DOMAIN_PATH + _ID + _PROPERTIES_PATH + _ID, DomainProperties, dict(redhawk=redhawk)),
 
-            # Waveforms
-            (_WAVEFORM_PATH + _LIST, Waveforms, dict(redhawk=redhawk)),
-            (_WAVEFORM_PATH + _ID, Waveforms, dict(redhawk=redhawk)),
-            (_WAVEFORM_PATH + _ID + _PORT_PATH + _LIST, PortHandler, dict(kind='waveform')),
-            (_WAVEFORM_PATH + _ID + _PORT_PATH + _ID, PortHandler, dict(kind='waveform')),
-            (_WAVEFORM_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler, dict(kind='waveform', _ioloop=_ioloop)),
+            # Applications
+            (_APPLICATION_PATH + _LIST, Applications, dict(redhawk=redhawk)),
+            (_APPLICATION_PATH + _ID, Applications, dict(redhawk=redhawk)),
+            (_APPLICATION_PATH + _ID + _PORT_PATH + _LIST, PortHandler, dict(kind='application')),
+            (_APPLICATION_PATH + _ID + _PORT_PATH + _ID, PortHandler, dict(kind='application')),
+            (_APPLICATION_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler, dict(kind='application', _ioloop=_ioloop)),
 
             # Components
             (_COMPONENT_PATH + _LIST, Component, dict(redhawk=redhawk)),

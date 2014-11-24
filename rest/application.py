@@ -18,10 +18,10 @@
 # along with this program.  If not, see http://www.gnu.org/licenses/.
 #
 """
-Rest handlers for Waveforms
+Rest handlers for Applications
 
 Classes:
-Waveforms -- Get info, launch and release
+Applications -- Get info, launch and release
 """
 
 from tornado import gen
@@ -32,7 +32,7 @@ from helper import PropertyHelper, PortHelper
 import json
 
 
-class Waveforms(JsonHandler, PropertyHelper, PortHelper):
+class Applications(JsonHandler, PropertyHelper, PortHelper):
     @gen.coroutine
     def get(self, domain_name, app_id=None):
 
@@ -49,10 +49,10 @@ class Waveforms(JsonHandler, PropertyHelper, PortHelper):
                 'properties': self.format_properties(app._properties)
             }
         else:
-            wfs = yield self.redhawk.get_application_list(domain_name)
-            avail = yield self.redhawk.get_available_applications(domain_name)
+            apps = yield self.redhawk.get_application_list(domain_name)
+            wfs = yield self.redhawk.get_available_applications(domain_name)
 
-            info = {'applications': wfs, 'waveforms': avail}
+            info = {'applications': apps, 'waveforms': wfs}
 
         self._render_json(info)
 
@@ -80,7 +80,7 @@ class Waveforms(JsonHandler, PropertyHelper, PortHelper):
                 app = yield self.redhawk.get_application(domain_name, app_id)
                 app.start()
 
-            self._render_json({'launched': app_id, 'waveforms': apps})
+            self._render_json({'launched': app_id, 'applications': apps})
 
     @gen.coroutine
     def put(self, domain_name, app_id=None):
@@ -101,4 +101,4 @@ class Waveforms(JsonHandler, PropertyHelper, PortHelper):
         yield self.redhawk.release_application(domain_name, app_id)
         apps = yield self.redhawk.get_application_list(domain_name)
 
-        self._render_json({'released': app_id, 'waveforms': apps})
+        self._render_json({'released': app_id, 'applications': apps})

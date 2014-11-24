@@ -48,7 +48,7 @@ class WaveformLaunchError(Exception):
         return "Not able to launch waveform '%s'. %s" % (self.name, self.msg)
 
 
-class WaveformReleaseError(Exception):
+class ApplicationReleaseError(Exception):
     def __init__(self, name='Unknown', msg=''):
         self.name = name
         self.msg = msg
@@ -107,7 +107,7 @@ class Domain:
         for app in apps:
             if app._get_identifier() == app_id:
                 return app
-        raise ResourceNotFound('waveform', app_id)
+        raise ResourceNotFound('application', app_id)
 
     def find_component(self, app_id, comp_id=None):
         app = self.find_app(app_id)
@@ -181,7 +181,7 @@ class Domain:
             app.releaseObject()
             return app_id
         except Exception, e:
-            raise WaveformReleaseError(app_id, str(e))
+            raise ApplicationReleaseError(app_id, str(e))
 
     def available_apps(self):
         _dom = self.get_domain_info()
@@ -222,17 +222,17 @@ class Domain:
             Locates a redhawk object with the given path, and path type. 
             Returns the object + remaining path:
 
-               wf, opath = locate(ipath, 'waveform')
+               comp, opath = locate(ipath, 'component')
 
 
             Valid path types are:
-                'waveform' - [ domain id, waveform-id ]
-                'component' - [ domain id, waveform-id, component-id ]
+                'application' - [ domain id, application-id ]
+                'component' - [ domain id, application-id, component-id ]
                 'device-mgr' - [ domain id, device-manager-id ]
                 'device' - [ domain id, device-manager-id, device-id ]
         '''
         domain = Domain(path[0])
-        if path_type == 'waveform':
+        if path_type == 'application':
             return domain.find_app(path[1]), path[2:]
         elif path_type == 'component':
             return domain.find_component(path[1], path[2]), path[3:]
@@ -240,5 +240,5 @@ class Domain:
             return domain.find_device_manager(path[1]), path[2:]
         elif path_type == 'device':
             return domain.find_device(path[1], path[2]), path[3:]
-        raise ValueError("Bad path type %s.  Must be one of waveform, component, device-mgr or device" % path_type)
+        raise ValueError("Bad path type %s.  Must be one of application, component, device-mgr or device" % path_type)
 
