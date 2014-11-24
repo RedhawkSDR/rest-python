@@ -56,17 +56,17 @@ class PortTests(AsyncHTTPTestCase, LogTrapTestCase, JsonAssertions):
 
     @tornado.testing.gen_test
     def test_domain_get_instance(self):        
-        response = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url('/rh/rest/domains/REDHAWK_DEV'))
+        response = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url('/redhawk/rest/domains/REDHAWK_DEV'))
         self.assertEquals(200, response.code)
         data = json.loads(response.body)
 
-        for name in ('waveforms', 'properties', 'deviceManagers', 'id', 'name'):
+        for name in ('applications', 'properties', 'deviceManagers', 'id', 'name'):
             self.assertTrue(name in data, "json missing %s" % name)
 
 
     def test_domain_get_failure(self):
         # callback must be used to get response to non-200 HTTPResponse
-        AsyncHTTPClient(self.io_loop).fetch(self.get_url('/rh/rest/domains/REDHAWK_DEV_FOO'), self.stop)
+        AsyncHTTPClient(self.io_loop).fetch(self.get_url('/redhawk/rest/domains/REDHAWK_DEV_FOO'), self.stop)
         response = self.wait()
 
         self.assertEquals(404, response.code)
@@ -76,17 +76,17 @@ class PortTests(AsyncHTTPTestCase, LogTrapTestCase, JsonAssertions):
 
 
     @tornado.testing.gen_test
-    def test_waveform_port_get(self):
+    def test_application_port_get(self):
         # get a list of waveforms
-        response = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url('/rh/rest/domains/REDHAWK_DEV/waveforms'))
+        response = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url('/redhawk/rest/domains/REDHAWK_DEV/applications'))
         self.assertEquals(200, response.code)
         data = json.loads(response.body)
-        for wf in data['waveforms']:
-            portr = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url('/rh/rest/domains/REDHAWK_DEV/waveforms/%s/ports' % wf['id']))
+        for wf in data['applications']:
+            portr = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url('/redhawk/rest/domains/REDHAWK_DEV/applications/%s/ports' % wf['id']))
             self.assertEquals(200, portr.code)
             pdata = json.loads(portr.body)
-            # FIXME: Test against a waveform with ports
+            # FIXME: Test against a applications with ports
             logging.debug("Found port data %s", pdata)
             break
         else:
-            self.fail('Unable to find any waveforms')
+            self.fail('Unable to find any applications')

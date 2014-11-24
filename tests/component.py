@@ -18,9 +18,8 @@
 # along with this program.  If not, see http://www.gnu.org/licenses/.
 #
 """
-Tornado tests for the /domain/{NAME}/waveforms/{ID}/components portion of the REST API
+Tornado tests for the /domain/{NAME}/applications/{ID}/components portion of the REST API
 """
-__author__ = 'rpcanno'
 
 from pyrest import Application
 from base import JsonTests
@@ -32,13 +31,13 @@ class ComponentTests(JsonTests):
     def setUp(self):
         super(ComponentTests, self).setUp()
         json, resp = self._json_request(
-            '/domains/%s/waveforms' % Default.DOMAIN_NAME,
+            '/domains/%s/applications' % Default.DOMAIN_NAME,
             200,
             'POST',
             {'name': Default.WAVEFORM}
         )
         self.assertTrue('launched' in json)
-        self.base_url = '/domains/%s/waveforms/%s' % (Default.DOMAIN_NAME, json['launched'])
+        self.base_url = '/domains/%s/applications/%s' % (Default.DOMAIN_NAME, json['launched'])
 
         json, resp = self._json_request(self.base_url, 200)
         self.assertList(json, 'components')

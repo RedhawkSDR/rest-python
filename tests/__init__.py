@@ -22,8 +22,8 @@ TestCases for the REST API
 
 Classes:
 DomainTests --  /domain
-WaveformTests -- /domain/{NAME}/waveforms
-ComponentTests -- /domain/{NAME}/waveforms/{ID}/components
+ApplicationTests -- /domain/{NAME}/applications
+ComponentTests -- /domain/{NAME}/applications/{ID}/components
 DeviceManagerTests -- /domain/{NAME}/deviceManagers
 DeviceTests -- /domain/{NAME}/deviceManagers/{ID}/devices
 """
@@ -34,7 +34,7 @@ from defaults import Default
 from domain import DomainTests
 from devicemanager import DeviceManagerTests
 from device import DeviceTests
-from waveform import WaveformTests
+from application import ApplicationTests
 from component import ComponentTests
 from bulkio import BulkIOTests
 from port import PortTests

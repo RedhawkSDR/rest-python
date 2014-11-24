@@ -40,7 +40,7 @@ class DomainTests(JsonTests):
         self.assertTrue('name' in body)
         self.assertEquals(body['name'], Default.DOMAIN_NAME)
 
-        self.assertTrue('waveforms' in body)
+        self.assertTrue('applications' in body)
         self.assertTrue('deviceManagers' in body)
         self.assertTrue('properties' in body)
         self.assertTrue('id' in body)

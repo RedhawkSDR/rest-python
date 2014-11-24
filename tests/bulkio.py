@@ -58,14 +58,14 @@ class BulkIOTests(AsyncHTTPTestCase, LogTrapTestCase):
         # NOTE: A timeout means the website took too long to respond
         # it could mean that bulkio port is not sending data
 
-        response = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url('/rh/rest/domains/REDHAWK_DEV/waveforms'))
+        response = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url('/redhawk/rest/domains/REDHAWK_DEV/applications'))
         self.assertEquals(200, response.code)
         data = json.loads(response.body)
-        wid = next((wf['id'] for wf in data['waveforms'] if wf['name'].startswith('Rtl_FM')), None)
+        wid = next((wf['id'] for wf in data['applications'] if wf['name'].startswith('Rtl_FM')), None)
         if not wid:
             self.fail('Unable to find RTL Waveform')            
 
-        response = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url("/rh/rest/domains/REDHAWK_DEV/waveforms/%s/components/"%wid))
+        response = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url("/redhawk/rest/domains/REDHAWK_DEV/applications/%s/components/"%wid))
         self.assertEquals(200, response.code)
         data = json.loads(response.body)
 
@@ -73,7 +73,7 @@ class BulkIOTests(AsyncHTTPTestCase, LogTrapTestCase):
         if not cid:
             self.fail('Unable to find NOOP component')
 
-        url = self.get_url("/rh/rest/domains/REDHAWK_DEV/waveforms/%s/components/%s/ports/dataFloat_out/bulkio"%(wid,cid)).replace('http','ws')
+        url = self.get_url("/redhawk/rest/domains/REDHAWK_DEV/applications/%s/components/%s/ports/dataFloat_out/bulkio"%(wid,cid)).replace('http','ws')
         conn1 = yield websocket.websocket_connect(url,
                                                   io_loop=self.io_loop) 
 
