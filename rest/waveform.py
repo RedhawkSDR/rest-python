@@ -52,7 +52,7 @@ class Waveforms(JsonHandler, PropertyHelper, PortHelper):
             wfs = yield self.redhawk.get_application_list(domain_name)
             avail = yield self.redhawk.get_available_applications(domain_name)
 
-            info = {'waveforms': wfs, 'available': avail}
+            info = {'applications': wfs, 'waveforms': avail}
 
         self._render_json(info)
 

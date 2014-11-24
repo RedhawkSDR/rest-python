@@ -44,7 +44,7 @@ class DomainInfo(JsonHandler, PropertyHelper):
                 'id': dom_info._get_identifier(),
                 'name': dom_info.name,
                 'properties': self.format_properties(properties),
-                'waveforms': apps,
+                'applications': apps,
                 'deviceManagers': device_managers
             }
 
