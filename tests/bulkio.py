@@ -36,17 +36,46 @@ from tornado import websocket, gen
 
 # application imports
 from pyrest import Application
+from base import JsonTests
+from defaults import Default
 
 # all method returning suite is required by tornado.testing.main()
 #def all():
 #   return unittest.TestLoader().loadTestsFromModule(__import__(__name__))
 
 
-class BulkIOTests(AsyncHTTPTestCase, LogTrapTestCase):
+class BulkIOTests(JsonTests, AsyncHTTPTestCase, LogTrapTestCase):
 
     # def setUp(self):
     #     super(RESTfulTest, self).setUp()
     #     rtl_app.RTLApp('REDHAWK_DEV').stop_survey()
+
+    def setUp(self):
+        super(JsonTests, self).setUp()
+        json, resp = self._json_request(
+            '/domains/%s/applications' % Default.DOMAIN_NAME,
+            200,
+            'POST',
+            {'name': Default.WAVEFORM,
+             'started': True }
+        )
+        self.assertTrue('launched' in json)
+        self.base_url = '/domains/%s/applications/%s' % (Default.DOMAIN_NAME, json['launched'])
+
+        json, resp = self._json_request(self.base_url, 200)
+        self.assertList(json, 'components')
+        self.assertTrue(json['components'])
+
+        self.components = json['components']
+
+    def tearDown(self):
+        self._json_request(
+            self.base_url,
+            200,
+            'DELETE'
+        )
+        super(BulkIOTests, self).tearDown()
+
 
 
     def get_app(self):
@@ -57,23 +86,11 @@ class BulkIOTests(AsyncHTTPTestCase, LogTrapTestCase):
 
         # NOTE: A timeout means the website took too long to respond
         # it could mean that bulkio port is not sending data
-
-        response = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url('/redhawk/rest/domains/REDHAWK_DEV/applications'))
-        self.assertEquals(200, response.code)
-        data = json.loads(response.body)
-        wid = next((wf['id'] for wf in data['applications'] if wf['name'].startswith('Rtl_FM')), None)
-        if not wid:
-            self.fail('Unable to find RTL Waveform')            
-
-        response = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url("/redhawk/rest/domains/REDHAWK_DEV/applications/%s/components/"%wid))
-        self.assertEquals(200, response.code)
-        data = json.loads(response.body)
-
-        cid = next((cp['id'] for cp in data['components'] if cp['name'] == 'NOOP'), None)
+        cid = next((cp['id'] for cp in self.components if cp['name'] == 'SigGen'), None)
         if not cid:
-            self.fail('Unable to find NOOP component')
+            self.fail('Unable to find SigGen component')
 
-        url = self.get_url("/redhawk/rest/domains/REDHAWK_DEV/applications/%s/components/%s/ports/dataFloat_out/bulkio"%(wid,cid)).replace('http','ws')
+        url = self.get_url("%s/components/%s/ports/out/bulkio"%(Default.REST_BASE+self.base_url,cid)).replace('http','ws')
         conn1 = yield websocket.websocket_connect(url,
                                                   io_loop=self.io_loop) 
 
