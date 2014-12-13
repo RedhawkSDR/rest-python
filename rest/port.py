@@ -24,22 +24,28 @@ Rest handlers for Ports
 import logging
 from tornado import web, ioloop
 from helper import PortHelper
-from model.domain import Domain, ResourceNotFound
+from model.domain import ResourceNotFound
+from tornado import gen
+
 import json
 
+from handler import JsonHandler
+from helper import PropertyHelper
 
-class PortHandler(web.RequestHandler, PortHelper):
+class PortHandler(JsonHandler, PropertyHelper, PortHelper):
 
-    def initialize(self, kind, _ioloop=None):
+    def initialize(self, kind, redhawk=None, _ioloop=None):
+        super(PortHandler, self).initialize(redhawk)
         self.kind = kind
         if not _ioloop:
             _ioloop = ioloop.IOLoop.current()
         self._ioloop = _ioloop
 
+    @gen.coroutine
     def get(self, *args):
         try:
             logging.debug("port kind=%s, path=%s", self.kind, args)
-            obj, path = Domain.locate_by_path(args, path_type=self.kind)
+            obj, path = yield self.redhawk.get_object_by_path(args, path_type=self.kind)
             logging.debug("Found object %s", dir(obj))
             if path:
                 name = path[0]

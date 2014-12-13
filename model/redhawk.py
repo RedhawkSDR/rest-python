@@ -26,7 +26,7 @@
 
 from _utils.tasking import background_task
 
-from domain import Domain, scan_domains
+from domain import Domain, scan_domains, ResourceNotFound
 
 
 class Redhawk(object):
@@ -34,12 +34,11 @@ class Redhawk(object):
 
     def _get_domain(self, domain_name):
         name = str(domain_name)
-        # if not name in self.__domains:
-        #     self.__domains[name] = Domain(domain_name)
-        #
-        # return self.__domains[name]
-        return Domain(domain_name)
-
+        if not name in self.__domains:
+            self.__domains[name] = Domain(domain_name)
+        
+        return self.__domains[name]
+    
     ##############################
     # DOMAIN
 
@@ -144,3 +143,33 @@ class Redhawk(object):
     def get_service_list(self, domain_name, device_manager_id):
         dom = self._get_domain(domain_name)
         return dom.services(device_manager_id)
+    
+    ##############################
+    # GENERIC
+    
+    @background_task
+    def get_object_by_path(self, path, path_type):
+        '''
+            Locates a redhawk object with the given path, and path type. 
+            Returns the object + remaining path:
+
+               comp, opath = locate(ipath, 'component')
+
+
+            Valid path types are:
+                'application' - [ domain id, application-id ]
+                'component' - [ domain id, application-id, component-id ]
+                'device-mgr' - [ domain id, device-manager-id ]
+                'device' - [ domain id, device-manager-id, device-id ]
+        '''
+        domain = self._get_domain(path[0])
+        if path_type == 'application':
+            return domain.find_app(path[1]), path[2:]
+        elif path_type == 'component':
+            return domain.find_component(path[1], path[2]), path[3:]
+        elif path_type == 'device-mgr':
+            return domain.find_device_manager(path[1]), path[2:]
+        elif path_type == 'device':
+            return domain.find_device(path[1], path[2]), path[3:]
+        raise ValueError("Bad path type %s.  Must be one of application, component, device-mgr or device" % path_type)
+

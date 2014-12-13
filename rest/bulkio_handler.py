@@ -23,7 +23,7 @@ import logging
 from bulkio.bulkioInterfaces import BULKIO__POA
 
 # third party imports
-from tornado import ioloop
+from tornado import ioloop, gen
 from tornado import websocket
 
 import numpy
@@ -61,16 +61,18 @@ class BulkIOWebsocketHandler(websocket.WebSocketHandler):
         'dataShort': _pass_through
     }
 
-    def initialize(self, kind, _ioloop=None):
+    def initialize(self, kind, redhawk=None, _ioloop=None):
         self.kind = kind
+        self.redhawk = redhawk
         if not _ioloop:
             _ioloop = ioloop.IOLoop.current()
         self._ioloop = _ioloop
 
+    @gen.coroutine
     def open(self, *args):
         try:
             logging.debug("BulkIOWebsocketHandler open kind=%s, path=%s", self.kind, args)
-            obj, path = Domain.locate_by_path(args, path_type=self.kind)
+            obj, path = yield self.redhawk.get_object_by_path(args, path_type=self.kind)
             logging.debug("Found object %s", dir(obj))
 
             for p in obj.ports:

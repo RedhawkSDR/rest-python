@@ -69,24 +69,34 @@ class Application(tornado.web.Application):
             # Domains
             (_DOMAIN_PATH + _LIST, DomainInfo, dict(redhawk=redhawk)),
             (_DOMAIN_PATH + _ID, DomainInfo, dict(redhawk=redhawk)),
-            (_DOMAIN_PATH + _ID + _PROPERTIES_PATH + _LIST, DomainProperties, dict(redhawk=redhawk)),
-            (_DOMAIN_PATH + _ID + _PROPERTIES_PATH + _ID, DomainProperties, dict(redhawk=redhawk)),
+            (_DOMAIN_PATH + _ID + _PROPERTIES_PATH + _LIST, DomainProperties,   
+                dict(redhawk=redhawk)),
+            (_DOMAIN_PATH + _ID + _PROPERTIES_PATH + _ID, DomainProperties, 
+                dict(redhawk=redhawk)),
 
             # Applications
             (_APPLICATION_PATH + _LIST, Applications, dict(redhawk=redhawk)),
             (_APPLICATION_PATH + _ID, Applications, dict(redhawk=redhawk)),
-            (_APPLICATION_PATH + _ID + _PORT_PATH + _LIST, PortHandler, dict(kind='application')),
-            (_APPLICATION_PATH + _ID + _PORT_PATH + _ID, PortHandler, dict(kind='application')),
-            (_APPLICATION_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler, dict(kind='application', _ioloop=_ioloop)),
+            (_APPLICATION_PATH + _ID + _PORT_PATH + _LIST, PortHandler, 
+                dict(redhawk=redhawk, kind='application')),
+            (_APPLICATION_PATH + _ID + _PORT_PATH + _ID, PortHandler, 
+                dict(redhawk=redhawk, kind='application')),
+            (_APPLICATION_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler, 
+                dict(redhawk=redhawk, kind='application', _ioloop=_ioloop)),
 
             # Components
             (_COMPONENT_PATH + _LIST, Component, dict(redhawk=redhawk)),
             (_COMPONENT_PATH + _ID, Component, dict(redhawk=redhawk)),
-            (_COMPONENT_PATH + _ID + _PROPERTIES_PATH + _LIST, ComponentProperties, dict(redhawk=redhawk)),
-            (_COMPONENT_PATH + _ID + _PROPERTIES_PATH + _ID, ComponentProperties, dict(redhawk=redhawk)),
-            (_COMPONENT_PATH + _ID + _PORT_PATH + _LIST, PortHandler, dict(kind='component')),
-            (_COMPONENT_PATH + _ID + _PORT_PATH + _ID, PortHandler, dict(kind='component')),
-            (_COMPONENT_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler, dict(kind='component', _ioloop=_ioloop)),
+            (_COMPONENT_PATH + _ID + _PROPERTIES_PATH + _LIST, ComponentProperties,
+                dict(redhawk=redhawk)),
+            (_COMPONENT_PATH + _ID + _PROPERTIES_PATH + _ID, ComponentProperties,
+                dict(redhawk=redhawk)),
+            (_COMPONENT_PATH + _ID + _PORT_PATH + _LIST, PortHandler,
+                dict(redhawk=redhawk, kind='component')),
+            (_COMPONENT_PATH + _ID + _PORT_PATH + _ID, PortHandler,
+                dict(redhawk=redhawk, kind='component')),
+            (_COMPONENT_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler,
+                dict(redhawk=redhawk, kind='component', _ioloop=_ioloop)),
 
             # Device Managers
             (_DEVICE_MGR_PATH + _LIST, DeviceManagers, dict(redhawk=redhawk)),
@@ -95,11 +105,16 @@ class Application(tornado.web.Application):
             # Devices
             (_DEVICE_PATH + _LIST, Devices, dict(redhawk=redhawk)),
             (_DEVICE_PATH + _ID, Devices, dict(redhawk=redhawk)),
-            (_DEVICE_PATH + _ID + _PROPERTIES_PATH + _LIST, DeviceProperties, dict(redhawk=redhawk)),
-            (_DEVICE_PATH + _ID + _PROPERTIES_PATH + _ID, DeviceProperties, dict(redhawk=redhawk)),
-            (_DEVICE_PATH + _ID + _PORT_PATH + _LIST, PortHandler, dict(kind='device')),
-            (_DEVICE_PATH + _ID + _PORT_PATH + _ID, PortHandler, dict(kind='device')),
-            (_DEVICE_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler, dict(kind='device', _ioloop=_ioloop)),
+            (_DEVICE_PATH + _ID + _PROPERTIES_PATH + _LIST, DeviceProperties,
+                dict(redhawk=redhawk)),
+            (_DEVICE_PATH + _ID + _PROPERTIES_PATH + _ID, DeviceProperties,
+                dict(redhawk=redhawk)),
+            (_DEVICE_PATH + _ID + _PORT_PATH + _LIST, PortHandler,
+                dict(redhawk=redhawk, kind='device')),
+            (_DEVICE_PATH + _ID + _PORT_PATH + _ID, PortHandler,
+                dict(redhawk=redhawk, kind='device')),
+            (_DEVICE_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler,
+                dict(redhawk=redhawk, kind='device', _ioloop=_ioloop)),
         ]
         tornado.web.Application.__init__(self, handlers, *args, **kwargs)
 

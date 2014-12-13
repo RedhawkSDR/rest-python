@@ -24,6 +24,7 @@ REDHAWK Helper class used by the Server Handlers
 import logging
 from ossie.utils import redhawk
 from ossie.utils.redhawk.channels import ODMListener
+import traceback
 
 
 def scan_domains():
@@ -64,6 +65,7 @@ class Domain:
     name = None
 
     def __init__(self, domainname):
+        logging.trace("Estasblishing domain %s", domainname, exc_info=True)
         self.name = domainname
         try:
             self._establish_domain()
@@ -76,6 +78,7 @@ class Domain:
             eventH.event_queue.put(event)
 
     def _connect_odm_listener(self):
+        
         self.odmListener = ODMListener()
         self.odmListener.connect(self.domMgr_ptr)
         self.odmListener.deviceManagerAdded.addListener(self._odm_response)
@@ -86,6 +89,7 @@ class Domain:
     def _establish_domain(self):
         redhawk.setTrackApps(False)
         self.domMgr_ptr = redhawk.attach(str(self.name))
+        self.domMgr_ptr.__odmListener = None
         self._connect_odm_listener()
 
     def properties(self):
@@ -215,30 +219,4 @@ class Domain:
         for svc in svcs:
             ret_dict.append({'name': svc._instanceName, 'id': svc._refid})
             return ret_dict
-
-    @staticmethod
-    def locate_by_path(path, path_type):
-        '''
-            Locates a redhawk object with the given path, and path type. 
-            Returns the object + remaining path:
-
-               comp, opath = locate(ipath, 'component')
-
-
-            Valid path types are:
-                'application' - [ domain id, application-id ]
-                'component' - [ domain id, application-id, component-id ]
-                'device-mgr' - [ domain id, device-manager-id ]
-                'device' - [ domain id, device-manager-id, device-id ]
-        '''
-        domain = Domain(path[0])
-        if path_type == 'application':
-            return domain.find_app(path[1]), path[2:]
-        elif path_type == 'component':
-            return domain.find_component(path[1], path[2]), path[3:]
-        elif path_type == 'device-mgr':
-            return domain.find_device_manager(path[1]), path[2:]
-        elif path_type == 'device':
-            return domain.find_device(path[1], path[2]), path[3:]
-        raise ValueError("Bad path type %s.  Must be one of application, component, device-mgr or device" % path_type)
 

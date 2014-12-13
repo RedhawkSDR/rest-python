@@ -22,13 +22,81 @@ Base TestCase class with convenience functions
 """
 __author__ = 'rpcanno'
 
+import itertools
+import time
+
 from tornado.testing import AsyncHTTPTestCase
-from tornado.httpclient import AsyncHTTPClient, HTTPRequest
+from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPResponse, HTTPError, _RequestProxy
+from tornado.simple_httpclient import SimpleAsyncHTTPClient
 from pyrest import Application
+from tornado import gen
+from tornado import httputil, stack_context
+from tornado.concurrent import TracebackFuture
 
 import json
 
 from defaults import Default
+
+
+class MyAsyncHTTPClient(SimpleAsyncHTTPClient):
+  '''
+     Adds a raise_error flag to fetch() to avoid exceptions when
+     fetching a non-200 based response code.  This code is from the latest 4.x
+     tornado which has not been released 
+  '''
+
+    
+  def fetch(self, request, callback=None, raise_error=True, **kwargs):
+        """Executes a request, asynchronously returning an `HTTPResponse`.
+
+        The request may be either a string URL or an `HTTPRequest` object.
+        If it is a string, we construct an `HTTPRequest` using any additional
+        kwargs: ``HTTPRequest(request, **kwargs)``
+
+        This method returns a `.Future` whose result is an
+        `HTTPResponse`.  By default, the ``Future`` will raise an `HTTPError`
+        if the request returned a non-200 response code. Instead, if
+        ``raise_error`` is set to False, the response will always be
+        returned regardless of the response code.
+
+        If a ``callback`` is given, it will be invoked with the `HTTPResponse`.
+        In the callback interface, `HTTPError` is not automatically raised.
+        Instead, you must check the response's ``error`` attribute or
+        call its `~HTTPResponse.rethrow` method.
+        """
+        if self._closed:
+            raise RuntimeError("fetch() called on closed AsyncHTTPClient")
+        if not isinstance(request, HTTPRequest):
+            request = HTTPRequest(url=request, **kwargs)
+        # We may modify this (to add Host, Accept-Encoding, etc),
+        # so make sure we don't modify the caller's object.  This is also
+        # where normal dicts get converted to HTTPHeaders objects.
+        request.headers = httputil.HTTPHeaders(request.headers)
+        request = _RequestProxy(request, self.defaults)
+        future = TracebackFuture()
+        if callback is not None:
+            callback = stack_context.wrap(callback)
+
+            def handle_future(future):
+                exc = future.exception()
+                if isinstance(exc, HTTPError) and exc.response is not None:
+                    response = exc.response
+                elif exc is not None:
+                    response = HTTPResponse(
+                        request, 599, error=exc,
+                        request_time=time.time() - request.start_time)
+                else:
+                    response = future.result()
+                self.io_loop.add_callback(callback, response)
+            future.add_done_callback(handle_future)
+
+        def handle_response(response):
+            if raise_error and response.error:
+                future.set_exception(response.error)
+            else:
+                future.set_result(response)
+        self.fetch_impl(request, handle_response)
+        return future
 
 class JsonAssertions(object):
 
@@ -108,6 +176,72 @@ class JsonTests(AsyncHTTPTestCase, JsonAssertions):
             data = json.loads(response.body)
 
         return data, response
+    
+    @gen.coroutine    
+    def _async_json_request(self, url, code, method='GET', json_data=None):
+        '''
+            Like _json_request, but yields a future
+            Use like:
+            @tornado.testing.gen_test
+            test_foo(self):
+                 json, resp = yield_async_json_request('foo/bar')
+                 self.assertEquals('bar', json['value'])
+            
+        '''         
+        body = None
+        if json_data:
+            body = json.dumps(json_data)
+
+        response = yield MyAsyncHTTPClient(self.io_loop).fetch(self.get_url(Default.REST_BASE+url), self.stop, method=method, body=body, raise_error=False)        
+        self.assertEquals(code, response.code)
+
+        data = {}
+        if response.body:
+            data = json.loads(response.body)
+
+        raise gen.Return((data, response))
+    
+    @gen.coroutine
+    def _async_set_property(self, comp_id, d={}, **kwargs):
+        '''
+            resp = yield _async_set_property(id, name=value, name=value)
+               or
+            resp = yield _async_set_property(id, {'foo:bar': 123})
+               
+        '''
+        json, resp = yield self._async_json_request(
+            "%s/components/%s/properties" % (self.base_url, comp_id), 200, 'PUT',
+            {'properties': [ 
+               {'id': p[0], 'value': p[1]} for p in itertools.chain(d.items(), kwargs.items())
+             ]}
+          )
+        raise gen.Return(resp)
+        
+    @gen.coroutine
+    def _async_get_properties(self, comp_id):
+        '''
+            Gets the properties asynchronously.  Properties is a dictionary of the returned
+            properties.  
+            
+            properties, resp = yield _async_get_properties(comp_id)
+        '''
+        json, resp = yield self._async_json_request("%s/components/%s/properties" % (self.base_url, comp_id), 200)
+        raise gen.Return((dict((p["id"], p["value"]) for p in json['properties']), resp))
+    
+    
+    @gen.coroutine
+    def _async_sleep(self, seconds):
+        '''
+            Sleeps this request in the ioloop for seconds seconds.
+            Usage:
+               yield task1()
+               yield _async_sleep(.5)
+               yield task2()
+               
+        '''
+        yield gen.Task(self.io_loop.add_timeout, time.time() + seconds)
+
+
 
     def _resource_not_found(self, body):
         self.assertTrue('error' in body)

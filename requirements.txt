@@ -1,2 +1,2 @@
-tornado==4.0.1
+tornado==4.0.2
 futures==2.1.6

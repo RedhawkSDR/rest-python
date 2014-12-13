@@ -38,3 +38,4 @@ from application import ApplicationTests
 from component import ComponentTests
 from bulkio import BulkIOTests
 from port import PortTests
+from concurrent import ConcurrencyTests
