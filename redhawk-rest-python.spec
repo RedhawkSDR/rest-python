@@ -24,7 +24,7 @@
 
 Prefix:         %{_prefix}
 Name:		redhawk-rest-python
-Version:	1.0.0
+Version:	2.1.0
 Release:	1%{?dist}
 Summary:	A REDHAWK REST application that exposes the entire domain.
 
