@@ -63,7 +63,7 @@ class DomainProperties(JsonHandler, PropertyHelper):
         if prop_name:
             value = None
             for item in info:
-                if item['name'] == prop_name:
+                if item['id'] == prop_name:
                     value = item
 
             if value:
