@@ -38,6 +38,7 @@ Requires:       redhawk-devel
 Requires:       bulkioInterfaces
 Requires:       redhawk-web
 Requires:       rhweb-python-tornado
+Requires:	python-futures
 
 %description
 %{summary}

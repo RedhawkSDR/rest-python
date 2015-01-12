@@ -211,7 +211,7 @@ class Domain:
         ret_dict = []
         for dev in devs:
             ret_dict.append({'name': dev.name, 'id': dev._id})
-            return ret_dict
+        return ret_dict
 
     def services(self, dev_mgr_id):
         svcs = self.find_service(dev_mgr_id)
