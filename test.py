@@ -19,11 +19,22 @@
 #
 from tornado.testing import main
 import unittest
+import doctest
 
 from tests import *
 
+from model import domain
+
 def all():
-    return unittest.TestLoader().loadTestsFromModule(__import__(__name__))
+    suite = unittest.TestLoader().loadTestsFromModule(__import__(__name__))
+    # Add domain doctests
+    suite.addTests(doctest.DocTestSuite(domain))
+    return suite
+
 
 if __name__ == '__main__':
+    # FIXME: Make unit test usable
+    # 1) direct output for working tests to a file, hide from console
+    # 2) be able to run specific tests easily
+    # 3) list the tests available
     main()

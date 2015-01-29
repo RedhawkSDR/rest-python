@@ -36,7 +36,7 @@ class Redhawk(object):
         name = str(domain_name)
         if not name in self.__domains:
             self.__domains[name] = Domain(domain_name)
-        
+
         return self.__domains[name]
     
     ##############################

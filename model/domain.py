@@ -21,15 +21,14 @@
 REDHAWK Helper class used by the Server Handlers
 """
 
+import sys
 import logging
 from ossie.utils import redhawk
 from ossie.utils.redhawk.channels import ODMListener
-import traceback
-
+from omniORB import CORBA
 
 def scan_domains():
     return redhawk.scan()
-
 
 class ResourceNotFound(Exception):
     def __init__(self, resource='resource', name='Unknown'):
@@ -57,6 +56,67 @@ class ApplicationReleaseError(Exception):
     def __str__(self):
         return "Not able to release waveform '%s'. %s" % (self.name, self.msg)
 
+def _parse_domainref(domainref):
+    '''
+        Parses a domain reference: location + ':' + DOMAINNAME
+        
+        Note that a location can be a hostname or an IP address (ipv4 and ipv6). 
+        Locations may be ommitted by just including the DOMAINNAME, unless the
+        DOMAINNAME includes a colon, in which case a blank location can
+        be specified by using a leading (e.g. ":DOMAIN:NAME" yields [None, 'DOMAIN:NAME'])
+        
+        ipv6 addresses should be surrounded by a '[' and ']' much like 
+        https://www.ietf.org/rfc/rfc2732.txt
+            
+        :param domainref: A formatted domain reference
+        :return: [location, domainname] list
+        
+       >>> _parse_domainref('DOMAINNAME')
+       (None, 'DOMAINNAME')
+       >>> _parse_domainref(':DOMAIN:NAME')
+       (None, 'DOMAIN:NAME')
+       >>> _parse_domainref('DOMAIN:NAME')
+       ('DOMAIN', 'NAME')
+       >>> _parse_domainref('127.2.7.1:NAME')
+       ('127.2.7.1', 'NAME')
+       >>> _parse_domainref('localhost:NAME')
+       ('localhost', 'NAME')
+       >>> _parse_domainref('[::1]:NAME')
+       ('::1', 'NAME')
+       >>> _parse_domainref('[::1]:DOMAIN:NAME')
+       ('::1', 'DOMAIN:NAME')
+       >>> _parse_domainref('localhost:')
+       Traceback (most recent call last):
+       ...
+       ValueError: invalid domain reference 'localhost:'
+       >>> _parse_domainref('')
+       Traceback (most recent call last):
+       ...
+       ValueError: invalid domain reference ''
+       >>> _parse_domainref(':localhost:')
+       (None, 'localhost:')
+       >>> _parse_domainref('[DOMAINNAME]XXX')
+       (None, '[DOMAINNAME]XXX')
+       >>> _parse_domainref(u'foo:DOMAINNAME')
+       ('foo', 'DOMAINNAME')
+    '''
+    if not domainref:
+        raise ValueError("invalid domain reference '%s'" % domainref)
+    if domainref[0] == ':':
+        return (None, domainref[1:])
+    if domainref[0] == '[':
+        addr, domain = domainref.split(']', 2)
+        if domain and domain[0] == ':':
+            return (addr[1:], _parse_domainref(domain)[1])
+        
+        return None, domainref
+    rtn = str(domainref).split(':', 2)
+    if len(rtn) == 1:
+        return (None, rtn[0])
+    if not rtn[1]:
+        raise ValueError("invalid domain reference '%s'" % domainref)
+    return (rtn[0], rtn[1])
+
 
 class Domain:
     domMgr_ptr = None
@@ -64,14 +124,22 @@ class Domain:
     eventHandlers = []
     name = None
 
-    def __init__(self, domainname):
-        logging.trace("Estasblishing domain %s", domainname, exc_info=True)
+    def __init__(self, domainuri):
+        location, domainname = _parse_domainref(domainuri)
+        logging.debug("Establishing domain %s at location %s", domainname, location,  exc_info=True)
+        
+        self._domainuri = domainuri
         self.name = domainname
+        self.location = location
+        # import pdb
+        # pdb.set_trace()
+
+
         try:
             self._establish_domain()
         except StandardError, e:
             logging.warn("Unable to find domain %s", e, exc_info=1)
-            raise ResourceNotFound("domain", domainname)
+            raise ResourceNotFound("domain", domainuri)
 
     def _odm_response(self, event):
         for eventH in self.eventHandlers:
@@ -88,7 +156,22 @@ class Domain:
 
     def _establish_domain(self):
         redhawk.setTrackApps(False)
-        self.domMgr_ptr = redhawk.attach(str(self.name))
+        # Workaround for issue CF-1115.  Archive and restore sys.argv
+        global _saved_argv
+        
+        try:
+            sys.argv = list(_saved_argv)
+        except NameError:
+            _saved_argv = list(sys.argv)
+
+        import pprint
+        pprint.pprint(sys.argv)
+        
+        try:
+            self.domMgr_ptr = redhawk.attach(self.name, self.location)
+        except CORBA.TRANSIENT:
+            raise ResourceNotFound('domain', self._domainuri)
+        
         self.domMgr_ptr.__odmListener = None
         self._connect_odm_listener()
 
@@ -220,3 +303,7 @@ class Domain:
             ret_dict.append({'name': svc._instanceName, 'id': svc._refid})
             return ret_dict
 
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()

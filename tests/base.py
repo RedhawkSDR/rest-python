@@ -24,6 +24,7 @@ __author__ = 'rpcanno'
 
 import itertools
 import time
+import unittest
 
 from tornado.testing import AsyncHTTPTestCase
 from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPResponse, HTTPError, _RequestProxy
@@ -98,7 +99,7 @@ class MyAsyncHTTPClient(SimpleAsyncHTTPClient):
         self.fetch_impl(request, handle_response)
         return future
 
-class JsonAssertions(object):
+class JsonAssertions(unittest.TestCase):
 
     RESPONSE_CODES_2XX = (200, 201, 202, 203, 204, 205, 206)
     RESPONSE_CODES_3XX = (300, 301, 302, 303, 304, 305, 306, 307)
@@ -131,8 +132,8 @@ class JsonAssertions(object):
         return data
 
     def assertAttr(self, data, name, value):
-        self.assertTrue(name in data)
-        self.assertEquals(data[name], value)
+        self.assertTrue(name in data, msg="Missing attribute '%s'" % name)
+        self.assertEquals(data[name], value, msg="Attribute '%s' incorrect: expected value '%s' actual value '%s'" % (name, value, data[name]))
 
     def assertList(self, data, name):
         self.assertTrue(name in data)

@@ -45,6 +45,23 @@ class DomainTests(JsonTests):
         self.assertTrue('properties' in body)
         self.assertTrue('id' in body)
 
+    def test_location_good(self):
+        body, resp = self._json_request("/domains/localhost:"+Default.DOMAIN_NAME, 200)
+
+        self.assertTrue('name' in body)
+        self.assertEquals(body['name'], Default.DOMAIN_NAME)
+
+        self.assertTrue('applications' in body)
+        self.assertTrue('deviceManagers' in body)
+        self.assertTrue('properties' in body)
+        self.assertTrue('id' in body)
+
+    def test_location_bad(self):
+        domainname='localh:%s' % Default.DOMAIN_NAME
+        body, resp = self._json_request("/domains/%s" % domainname, 404)
+        self.assertAttr(body, 'error', 'ResourceNotFound')
+        self.assertAttr(body, 'message', "Unable to find domain '%s'" % domainname)
+
     def test_info_not_found(self):
         body, resp = self._json_request("/domains/ldskfadjklfsdjkfasdl", 404)
         print body
