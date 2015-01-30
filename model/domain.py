@@ -61,7 +61,7 @@ def _parse_domainref(domainref):
         Parses a domain reference: location + ':' + DOMAINNAME
         
         Note that a location can be a hostname or an IP address (ipv4 and ipv6). 
-        Locations may be ommitted by just including the DOMAINNAME, unless the
+        Locations may be omitted by just including the DOMAINNAME, unless the
         DOMAINNAME includes a colon, in which case a blank location can
         be specified by using a leading (e.g. ":DOMAIN:NAME" yields [None, 'DOMAIN:NAME'])
         
@@ -85,6 +85,8 @@ def _parse_domainref(domainref):
        ('::1', 'NAME')
        >>> _parse_domainref('[::1]:DOMAIN:NAME')
        ('::1', 'DOMAIN:NAME')
+       >>> _parse_domainref('[::1:DOMAIN:NAME')
+       ('[::1', 'DOMAIN:NAME')
        >>> _parse_domainref('localhost:')
        Traceback (most recent call last):
        ...
@@ -124,11 +126,11 @@ class Domain:
     eventHandlers = []
     name = None
 
-    def __init__(self, domainuri):
-        location, domainname = _parse_domainref(domainuri)
+    def __init__(self, domainref):
+        location, domainname = _parse_domainref(domainref)
         logging.debug("Establishing domain %s at location %s", domainname, location,  exc_info=True)
         
-        self._domainuri = domainuri
+        self._domainref = domainref
         self.name = domainname
         self.location = location
         # import pdb
@@ -139,7 +141,7 @@ class Domain:
             self._establish_domain()
         except StandardError, e:
             logging.warn("Unable to find domain %s", e, exc_info=1)
-            raise ResourceNotFound("domain", domainuri)
+            raise ResourceNotFound("domain", domainref)
 
     def _odm_response(self, event):
         for eventH in self.eventHandlers:
@@ -156,21 +158,10 @@ class Domain:
 
     def _establish_domain(self):
         redhawk.setTrackApps(False)
-        # Workaround for issue CF-1115.  Archive and restore sys.argv
-        global _saved_argv
-        
-        try:
-            sys.argv = list(_saved_argv)
-        except NameError:
-            _saved_argv = list(sys.argv)
-
-        import pprint
-        pprint.pprint(sys.argv)
-        
         try:
             self.domMgr_ptr = redhawk.attach(self.name, self.location)
         except CORBA.TRANSIENT:
-            raise ResourceNotFound('domain', self._domainuri)
+            raise ResourceNotFound('domain', self._domainref)
         
         self.domMgr_ptr.__odmListener = None
         self._connect_odm_listener()
