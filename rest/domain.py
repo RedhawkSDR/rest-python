@@ -29,16 +29,22 @@ from tornado import gen
 
 from handler import JsonHandler
 from helper import PropertyHelper
+from model.domain import parse_domainref 
 
 
 class DomainInfo(JsonHandler, PropertyHelper):
     @gen.coroutine
-    def get(self, domain_name=None):
+    def get(self, domain_ref=None):
+        domain_name = location = None
+        if domain_ref:
+            location, domain_name = parse_domainref(domain_ref)
+        
+        
         if domain_name:
-            dom_info = yield self.redhawk.get_domain_info(domain_name)
-            properties = yield self.redhawk.get_domain_properties(domain_name)
-            apps = yield self.redhawk.get_application_list(domain_name)
-            device_managers = yield self.redhawk.get_device_manager_list(domain_name)
+            dom_info = yield self.redhawk.get_domain_info(domain_ref)
+            properties = yield self.redhawk.get_domain_properties(domain_ref)
+            apps = yield self.redhawk.get_application_list(domain_ref)
+            device_managers = yield self.redhawk.get_device_manager_list(domain_ref)
 
             info = {
                 'id': dom_info._get_identifier(),
@@ -49,7 +55,7 @@ class DomainInfo(JsonHandler, PropertyHelper):
             }
 
         else:
-            domains = yield self.redhawk.get_domain_list()
+            domains = yield self.redhawk.get_domain_list(location)
             info = {'domains': domains}
         self._render_json(info)
 

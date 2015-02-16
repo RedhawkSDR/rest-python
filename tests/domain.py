@@ -24,6 +24,7 @@ __author__ = 'rpcanno'
 
 from base import JsonTests
 from defaults import Default
+import socket
 
 
 class DomainTests(JsonTests):
@@ -33,6 +34,30 @@ class DomainTests(JsonTests):
 
         self.assertTrue('domains' in body)
         self.assertTrue(isinstance(body['domains'], list))
+        if len(body['domains']) == 0:
+            self.fail("Invalid test.  Expected at least one REDHAWK Domain returned, received 0")
+        for d in body['domains']:
+            if ':' in d:
+                self.fail("Not expecting location in domain (no ':').  Received '%s'" % d)
+
+    def test_list_location(self):
+        hosts = [ 'localhost', socket.gethostname() ]
+        for h in hosts:
+            body, resp = self._json_request("/domains/%s:" % h, 200)
+            self.assertTrue('domains' in body)
+            self.assertTrue(isinstance(body['domains'], list))
+            if len(body['domains']) == 0:
+                self.fail("Invalid test.  Expected at least one REDHAWK Domain returned, received 0")
+            for d in body['domains']:
+                d = str(d)
+                if not d.startswith("%s:" % h):
+                    self.fail("Returned domain missing location.  Expected %s:XXX received %s" % (h, d))
+
+    def test_list_bad_location(self):
+        body, resp = self._json_request("/domains/localhost_bad:", 404)
+        self.assertAttr(body, 'error', 'ResourceNotFound')
+        self.assertAttr(body, 'message', "Unable to connect with NameService on host 'localhost_bad'")
+
 
     def test_info(self):
         body, resp = self._json_request("/domains/"+Default.DOMAIN_NAME, 200)
@@ -62,7 +87,9 @@ class DomainTests(JsonTests):
         self.assertAttr(body, 'error', 'ResourceNotFound')
         self.assertAttr(body, 'message', "Unable to find domain '%s'" % domainname)
 
-    def test_info_not_found(self):
+    def test_domain_not_found(self):
         body, resp = self._json_request("/domains/ldskfadjklfsdjkfasdl", 404)
         print body
         self._resource_not_found(body)
+
+

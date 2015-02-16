@@ -27,16 +27,24 @@ from ossie.utils import redhawk
 from ossie.utils.redhawk.channels import ODMListener
 from omniORB import CORBA
 
-def scan_domains():
-    return redhawk.scan()
+def scan_domains(location=None):
+    try:
+        return [ build_domainref(location, d) for d in redhawk.scan(location) ]
+    except RuntimeError, e:
+        # FIXME: Runtime Error is not very descriptive.  Need to weed out other problems
+        if not location:
+            location = 'localhost'
+        raise ResourceNotFound(msg="Unable to connect with NameService on host '%s'" % location)
+        
 
 class ResourceNotFound(Exception):
-    def __init__(self, resource='resource', name='Unknown'):
+    def __init__(self, resource='resource', name='Unknown', msg=None):
         self.name = name
         self.resource = resource
+        self.msg = msg if msg else "Unable to find %s '%s'" % (self.resource, self.name)
 
     def __str__(self):
-        return "Unable to find %s '%s'" % (self.resource, self.name)
+        return self.msg
 
 
 class WaveformLaunchError(Exception):
@@ -56,69 +64,110 @@ class ApplicationReleaseError(Exception):
     def __str__(self):
         return "Not able to release waveform '%s'. %s" % (self.name, self.msg)
 
-def _parse_domainref(domainref):
+def parse_domainref(domainref):
     '''
         Parses a domain reference: location + ':' + DOMAINNAME
-        
-        Note that a location can be a hostname or an IP address (ipv4 and ipv6). 
+
+        Note that a location can be a hostname or an IP address (ipv4 and ipv6).
         Locations may be omitted by just including the DOMAINNAME, unless the
         DOMAINNAME includes a colon, in which case a blank location can
         be specified by using a leading (e.g. ":DOMAIN:NAME" yields [None, 'DOMAIN:NAME'])
-        
-        ipv6 addresses should be surrounded by a '[' and ']' much like 
+
+        ipv6 addresses should be surrounded by a '[' and ']' much like
         https://www.ietf.org/rfc/rfc2732.txt
-            
+
         :param domainref: A formatted domain reference
         :return: [location, domainname] list
-        
-       >>> _parse_domainref('DOMAINNAME')
+
+       >>> parse_domainref('DOMAINNAME')
        (None, 'DOMAINNAME')
-       >>> _parse_domainref(':DOMAIN:NAME')
+       >>> parse_domainref(':DOMAIN:NAME')
        (None, 'DOMAIN:NAME')
-       >>> _parse_domainref('DOMAIN:NAME')
+       >>> parse_domainref('DOMAIN:NAME')
        ('DOMAIN', 'NAME')
-       >>> _parse_domainref('127.2.7.1:NAME')
+       >>> parse_domainref('127.2.7.1:NAME')
        ('127.2.7.1', 'NAME')
-       >>> _parse_domainref('localhost:NAME')
+       >>> parse_domainref('localhost:NAME')
        ('localhost', 'NAME')
-       >>> _parse_domainref('[::1]:NAME')
+       >>> parse_domainref('[::1]:NAME')
        ('::1', 'NAME')
-       >>> _parse_domainref('[::1]:DOMAIN:NAME')
+       >>> parse_domainref('[::1]:DOMAIN:NAME')
        ('::1', 'DOMAIN:NAME')
-       >>> _parse_domainref('[::1:DOMAIN:NAME')
-       ('[::1', 'DOMAIN:NAME')
-       >>> _parse_domainref('localhost:')
-       Traceback (most recent call last):
-       ...
-       ValueError: invalid domain reference 'localhost:'
-       >>> _parse_domainref('')
+       >>> parse_domainref('[::1]:]DOMAIN:NAME')
+       ('::1', ']DOMAIN:NAME')
+       >>> parse_domainref('[::1:DOMAIN:NAME')
+       ('[', ':1:DOMAIN:NAME')
+       >>> parse_domainref('localhost:')
+       ('localhost', None)
+       >>> parse_domainref('')
        Traceback (most recent call last):
        ...
        ValueError: invalid domain reference ''
-       >>> _parse_domainref(':localhost:')
+       >>> parse_domainref(':localhost:')
        (None, 'localhost:')
-       >>> _parse_domainref('[DOMAINNAME]XXX')
+       >>> parse_domainref('[DOMAINNAME]XXX')
        (None, '[DOMAINNAME]XXX')
-       >>> _parse_domainref(u'foo:DOMAINNAME')
+       >>> parse_domainref(u'foo:DOMAINNAME')
        ('foo', 'DOMAINNAME')
     '''
     if not domainref:
         raise ValueError("invalid domain reference '%s'" % domainref)
     if domainref[0] == ':':
         return (None, domainref[1:])
-    if domainref[0] == '[':
-        addr, domain = domainref.split(']', 2)
+    if domainref[0] == '[' and ']' in domainref:
+        addr, domain = domainref.split(']', 1)
         if domain and domain[0] == ':':
-            return (addr[1:], _parse_domainref(domain)[1])
-        
+            return (addr[1:], parse_domainref(domain)[1])
+
         return None, domainref
-    rtn = str(domainref).split(':', 2)
+    rtn = str(domainref).split(':', 1)
     if len(rtn) == 1:
         return (None, rtn[0])
     if not rtn[1]:
-        raise ValueError("invalid domain reference '%s'" % domainref)
+        return (rtn[0], None)
     return (rtn[0], rtn[1])
 
+def build_domainref(location, domain):
+    '''
+        Generates a safe domainref using a location and a domain.  Escapes things as necessary
+        
+        >>> build_domainref(None, 'Domainname')
+        'Domainname'
+        >>> build_domainref('Hostname', 'Domainname')
+        'Hostname:Domainname'
+        >>> build_domainref('Hostname', None)
+        'Hostname:'
+        >>> build_domainref('Hostname', '')
+        'Hostname:'
+        >>> build_domainref('', 'DOMAIN')
+        'DOMAIN'
+        >>> build_domainref('', 'Domainname')
+        'Domainname'
+        >>> build_domainref('', ':Domainname')
+        '::Domainname'
+        >>> build_domainref('', 'Domainname:')
+        ':Domainname:'
+        >>> build_domainref('127.2.7.1', 'NAME')
+        '127.2.7.1:NAME'
+        >>> build_domainref('::1', 'NAME')
+        '[::1]:NAME'
+        >>> build_domainref(None, '[DOMAINNAME]XXX')
+        '[DOMAINNAME]XXX'
+        >>> build_domainref('[', ':1:DOMAIN:NAME')
+        '[::1:DOMAIN:NAME'
+    '''
+    if not domain:
+        domain = ''
+    domain = str(domain)
+    if not location:
+        if ':' in domain:
+            return ":%s" % domain
+        else:
+            return domain
+    location = str(location)
+    if ":" in location:
+        location = "[%s]" % location
+    return "%s:%s" % (location, domain)
 
 class Domain:
     domMgr_ptr = None
@@ -127,7 +176,7 @@ class Domain:
     name = None
 
     def __init__(self, domainref):
-        location, domainname = _parse_domainref(domainref)
+        location, domainname = parse_domainref(domainref)
         logging.debug("Establishing domain %s at location %s", domainname, location,  exc_info=True)
         
         self._domainref = domainref

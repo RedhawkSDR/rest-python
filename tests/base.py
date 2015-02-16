@@ -26,6 +26,7 @@ import itertools
 import time
 import unittest
 
+import tornado
 from tornado.testing import AsyncHTTPTestCase
 from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPResponse, HTTPError, _RequestProxy
 from tornado.simple_httpclient import SimpleAsyncHTTPClient
@@ -163,14 +164,26 @@ class JsonTests(AsyncHTTPTestCase, JsonAssertions):
         return Application()
 
     def _json_request(self, url, code, method='GET', json_data=None):
+        ''' 
+            A json request that can be used in setUp, tearDown, or non-async tests
+            (those tests not wrapped with @gen_test)
+        :param url:
+        :param code: 
+        :param method: 
+        :param json_data: 
+        :return:
+        '''
         body = None
         if json_data:
             body = json.dumps(json_data)
 
-        AsyncHTTPClient(self.io_loop).fetch(self.get_url(Default.REST_BASE+url), self.stop, method=method, body=body)
+        fullurl = self.get_url(Default.REST_BASE+url)
+        AsyncHTTPClient(self.io_loop).fetch(fullurl, self.stop, method=method, body=body)
         response = self.wait()
 
-        self.assertEquals(code, response.code)
+        self.assertEquals(code, response.code, 
+                          msg="Unexpected response in request '%s'.  Expected %s, Received %s\nBody: %s" %
+                                                   (fullurl, code, response.code, response.body))
 
         data = {}
         if response.body:
@@ -193,8 +206,11 @@ class JsonTests(AsyncHTTPTestCase, JsonAssertions):
         if json_data:
             body = json.dumps(json_data)
 
-        response = yield MyAsyncHTTPClient(self.io_loop).fetch(self.get_url(Default.REST_BASE+url), self.stop, method=method, body=body, raise_error=False)        
-        self.assertEquals(code, response.code)
+        fullurl = self.get_url(Default.REST_BASE+url)
+        response = yield MyAsyncHTTPClient(self.io_loop).fetch(fullurl, None, method=method, body=body, raise_error=False)
+        self.assertEquals(code, response.code,
+                          msg="Unexpected response in request '%s'.  Expected %s, Received %s\nBody: %s" %
+                              (fullurl, code, response.code, response.body))
 
         data = {}
         if response.body:
@@ -249,3 +265,95 @@ class JsonTests(AsyncHTTPTestCase, JsonAssertions):
         self.assertEquals(body['error'], Default.RESOURCE_NOT_FOUND_ERR)
         self.assertTrue('message' in body)
         self.assertTrue(Default.RESOURCE_NOT_FOUND_MSG_REGEX.match(body['message']))
+
+
+class RedhawkTests(JsonTests):
+    
+    def _clean_applications(self, apps=None ):
+        '''
+            Cleans the given applications.  
+            
+        :param apps: List of applications to kill, None to kill all
+        :return:
+        '''
+        
+        def _matches(name, list):
+            name = str(name)
+            if not list:
+                return True
+            for a in list:
+                if name.startswith(a):
+                    return True
+            return False
+        
+        url = '/domains/'+Default.DOMAIN_NAME
+        json, resp = self._json_request(url, 200)
+        if 'applications' not in json:
+            json['applications'] = []
+        for a in json['applications']:
+            if _matches(a['name'], apps):
+                self._json_request(
+                    '/domains/'+Default.DOMAIN_NAME+'/applications/'+a['id'],
+                    200,
+                    'DELETE'
+                )
+
+    @tornado.gen.coroutine
+    def _async_clean_applications(self, apps=None ):
+        '''
+            Cleans the given applications.  
+            
+        :param apps: List of applications to kill, None to kill all
+        :return:
+        '''
+
+        def _matches(name, list):
+            name = str(name)
+            if not list:
+                return True
+            for a in list:
+                if name.startswith(a):
+                    return True
+            return False
+        
+        url, applications = yield self._get_applications()
+        for a in applications:
+            if _matches(a['name'], apps):
+                self._release(a['id'])
+
+    @tornado.gen.coroutine
+    def _get_applications(self):
+        url = '/domains/'+Default.DOMAIN_NAME
+        json, resp = yield self._async_json_request(url, 200)
+
+        self.assertTrue('applications' in json)
+
+        raise tornado.gen.Return((url, json['applications']))
+
+    @tornado.gen.coroutine
+    def _launch(self, name):
+        json, resp = yield self._async_json_request(
+            '/domains/'+Default.DOMAIN_NAME+'/applications',
+            200,
+            'POST',
+            {'name': name}
+        )
+        self.assertTrue('launched' in json)
+        self.assertTrue('applications' in json)
+        self.assertTrue(json['launched'] in [x['id'] for x in json['applications']])
+
+        raise tornado.gen.Return(json['launched'])
+
+    @tornado.gen.coroutine
+    def _release(self, wf_id):
+        json, resp = yield self._async_json_request(
+            '/domains/'+Default.DOMAIN_NAME+'/applications/'+wf_id,
+            200,
+            'DELETE'
+        )
+
+        self.assertAttr(json, 'released', wf_id)
+
+        self.assertTrue('applications' in json)
+        self.assertFalse(json['released'] in json['applications'])
+        raise tornado.gen.Return(resp)

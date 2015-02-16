@@ -43,8 +43,8 @@ class Redhawk(object):
     # DOMAIN
 
     @background_task
-    def get_domain_list(self):
-        return scan_domains()
+    def get_domain_list(self, location=None):
+        return scan_domains(location)
 
     @background_task
     def get_domain_info(self, domain_name):

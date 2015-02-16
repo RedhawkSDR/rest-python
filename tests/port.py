@@ -34,7 +34,7 @@ from tornado.testing import AsyncHTTPTestCase, LogTrapTestCase
 from tornado.httpclient import AsyncHTTPClient, HTTPRequest
 from tornado import websocket, gen
 
-from base import JsonAssertions
+from base import JsonAssertions, RedhawkTests
 # application imports
 from pyrest import Application
 
@@ -43,7 +43,7 @@ def all():
    return unittest.TestLoader().loadTestsFromModule(__import__(__name__))
 
 
-class PortTests(AsyncHTTPTestCase, LogTrapTestCase, JsonAssertions):
+class PortTests(RedhawkTests, AsyncHTTPTestCase, LogTrapTestCase, JsonAssertions):
 
     # def setUp(self):
     #     super(RESTfulTest, self).setUp()
@@ -77,16 +77,12 @@ class PortTests(AsyncHTTPTestCase, LogTrapTestCase, JsonAssertions):
 
     @tornado.testing.gen_test
     def test_application_port_get(self):
+        self._async_clean_applications()
         # get a list of waveforms
-        response = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url('/redhawk/rest/domains/REDHAWK_DEV/applications'))
-        self.assertEquals(200, response.code)
-        data = json.loads(response.body)
-        for wf in data['applications']:
-            portr = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url('/redhawk/rest/domains/REDHAWK_DEV/applications/%s/ports' % wf['id']))
-            self.assertEquals(200, portr.code)
-            pdata = json.loads(portr.body)
-            # FIXME: Test against a applications with ports
-            logging.debug("Found port data %s", pdata)
-            break
-        else:
-            self.fail('Unable to find any applications')
+        id = yield self._launch('TestConfigureWaveform')
+        self._async_sleep(1)
+        portr = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url('/redhawk/rest/domains/REDHAWK_DEV/applications/%s/ports' % id))
+        self.assertEquals(200, portr.code)
+        pdata = json.loads(portr.body)
+        # FIXME: Test against a applications with ports
+        logging.debug("Found port data %s", pdata)

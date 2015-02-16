@@ -24,12 +24,12 @@ Tornado tests for the /domain/{NAME}/applications portion of the REST API
 import pprint
 import tornado
 
-from base import JsonTests
+from base import RedhawkTests
 from defaults import Default
 from model.redhawk import Redhawk
 
 
-class ApplicationTests(JsonTests):
+class ApplicationTests(RedhawkTests):
     
     def setUp(self):
         super(ApplicationTests, self).setUp();
@@ -37,55 +37,9 @@ class ApplicationTests(JsonTests):
 
     def tearDown(self):
         # kill SigTest waveforms
-        url = '/domains/'+Default.DOMAIN_NAME
-        json, resp =  self._json_request(url, 200)
-        if 'applications' not in json:
-            json['applications'] = []
-        for a in json['applications']:
-            if a['name'].startswith('SigTest'):
-                self._json_request(
-                            '/domains/'+Default.DOMAIN_NAME+'/applications/'+a['id'],
-                            200,
-                            'DELETE'
-                            )
+        self._clean_applications(['SigTest'])
         super(ApplicationTests, self).tearDown();
     
-    @tornado.gen.coroutine
-    def _get_applications(self):
-        url = '/domains/'+Default.DOMAIN_NAME
-        json, resp = yield self._async_json_request(url, 200)
-
-        self.assertTrue('applications' in json)
-
-        raise tornado.gen.Return((url, json['applications']))
-
-    @tornado.gen.coroutine
-    def _launch(self, name):
-        json, resp = yield self._async_json_request(
-            '/domains/'+Default.DOMAIN_NAME+'/applications',
-            200,
-            'POST',
-            {'name': name}
-        )
-        self.assertTrue('launched' in json)
-        self.assertTrue('applications' in json)
-        self.assertTrue(json['launched'] in [x['id'] for x in json['applications']])
-
-        raise tornado.gen.Return(json['launched'])
-
-    @tornado.gen.coroutine
-    def _release(self, wf_id):
-        json, resp = yield self._async_json_request(
-            '/domains/'+Default.DOMAIN_NAME+'/applications/'+wf_id,
-            200,
-            'DELETE'
-        )
-
-        self.assertAttr(json, 'released', wf_id)
-
-        self.assertTrue('applications' in json)
-        self.assertFalse(json['released'] in json['applications'])
-        raise tornado.gen.Return(resp)
 
     @tornado.testing.gen_test
     def test_launch_release(self):
