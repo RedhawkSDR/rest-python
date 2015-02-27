@@ -23,19 +23,11 @@ REDHAWK Helper class used by the Server Handlers
 
 import sys
 import logging
+import re
 from ossie.utils import redhawk
 from ossie.utils.redhawk.channels import ODMListener
 from omniORB import CORBA
 
-def scan_domains(location=None):
-    try:
-        return [ build_domainref(location, d) for d in redhawk.scan(location) ]
-    except RuntimeError, e:
-        # FIXME: Runtime Error is not very descriptive.  Need to weed out other problems
-        if not location:
-            location = 'localhost'
-        raise ResourceNotFound(msg="Unable to connect with NameService on host '%s'" % location)
-        
 
 class ResourceNotFound(Exception):
     def __init__(self, resource='resource', name='Unknown', msg=None):
@@ -63,6 +55,20 @@ class ApplicationReleaseError(Exception):
 
     def __str__(self):
         return "Not able to release waveform '%s'. %s" % (self.name, self.msg)
+
+def scan_domains(location=None):
+    print "HERE!\n\n\n %s" % redhawk_remote_bug
+    if redhawk_remote_bug and location and location != 'localhost':
+        raise Exception('Remote domain connectivity is unavailable in Redhawk <= 1.10.2')
+    
+    try:
+        return [ build_domainref(location, d) for d in redhawk.scan(location) ]
+    except RuntimeError, e:
+        # FIXME: Runtime Error is not very descriptive.  Need to weed out other problems
+        if not location:
+            location = 'localhost'
+        raise ResourceNotFound(msg="Unable to connect with NameService on host '%s'" % location)
+
 
 def parse_domainref(domainref):
     '''
@@ -169,6 +175,75 @@ def build_domainref(location, domain):
         location = "[%s]" % location
     return "%s:%s" % (location, domain)
 
+def _parse_dist_version(distver, element=None):
+    '''
+    :param distver: distribution version from pkg_resources
+    :return: a three element tuple of only the integers
+        >>> _parse_dist_version(('00000001', '00000010', '00000002', '*final'))
+        (1, 10, 2)
+        >>> _parse_dist_version(('00000002', '00000012', '00000002', '*final'))
+        (2, 12, 2)
+        >>> _parse_dist_version(('00000002', '00000012', '0000002b', '*final'))
+        (2, 12, 2)
+        >>> _parse_dist_version(('00000002', '00000012', '000000b', '*final'))
+        (2, 12, 0)
+        >>> _parse_dist_version(('00000002', '00000012', 'b', '*final'))
+        (2, 12, 0)
+    '''
+    if element is None:
+        return (_parse_dist_version(distver, 0),
+                _parse_dist_version(distver, 1),
+                _parse_dist_version(distver, 2))
+    try:
+        return int(re.findall('\d+', distver[element])[0])
+    except (ValueError, IndexError):
+        return 0
+
+def _identify_buggy_redhawk_location(v):
+    '''
+    Identifies the python code that is unable to connect to more
+    than a single remote location. The bug means that only the first
+    location is used.  And subsequent calls with different locations
+    will connect only use the first location.  Bug is fixed
+    in Redhawk 1.10.3 (core framework v 1.10.2) 
+    
+    :param v: tuple representing version major, minor, patch
+    :return: boolean
+       >>> _identify_buggy_redhawk_location((1, 10, 1))
+       True
+       >>> _identify_buggy_redhawk_location((1, 10, 2))
+       False
+       >>> _identify_buggy_redhawk_location((1, 11, 1))
+       False
+       >>> _identify_buggy_redhawk_location((2, 1, 1))
+       False
+       >>> _identify_buggy_redhawk_location((1, 9, 2))
+       True
+    '''
+    return v[0] == 1 and ((v[1] == 10 and v[2] < 2) or v[1] < 10)
+
+def get_redhawk_version():
+    '''
+        Attempt to find redhawk version.
+        :return: the version
+    '''
+    try:
+        import pkg_resources
+        dist = pkg_resources.get_distribution('ossiepy')
+        return _parse_dist_version(dist.parsed_version)
+    except Exception, e:
+        logging.exception("Unable to determine redhawk_version")
+        raise
+
+def has_remote_location_bug():
+    try:
+        return _identify_buggy_redhawk_location(get_redhawk_version())
+    except Exception, e:
+        logging.exception("Unable to determine redhawk_version so turning off remote locations")
+        return True
+    
+redhawk_remote_bug = has_remote_location_bug()
+
 class Domain:
     domMgr_ptr = None
     odmListener = None
@@ -177,6 +252,9 @@ class Domain:
 
     def __init__(self, domainref):
         location, domainname = parse_domainref(domainref)
+        if redhawk_remote_bug and location and location != 'localhost':
+            raise Exception('Remote domain connectivity is unavailable in Redhawk <= 1.10.2')
+
         logging.debug("Establishing domain %s at location %s", domainname, location,  exc_info=True)
         
         self._domainref = domainref

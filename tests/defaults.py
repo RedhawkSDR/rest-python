@@ -24,7 +24,7 @@ import re
 
 class Default(object):
     REST_BASE = "/redhawk/rest"
-    DOMAIN_NAME = "REDHAWK_DEV"
+    DOMAIN_NAME = "REDHAWK_TEST"
 
     WAVEFORM = 'SigTest'
 

@@ -25,9 +25,19 @@ __author__ = 'rpcanno'
 from base import JsonTests
 from defaults import Default
 import socket
+from model import domain
 
 
 class DomainTests(JsonTests):
+    
+    def setUp(self):
+        self.redhawk_remote_bug = domain.redhawk_remote_bug
+        super(DomainTests, self).setUp()
+
+    def tearDown(self):
+        super(DomainTests, self).tearDown()
+        domain.redhawk_remote_bug = self.redhawk_remote_bug
+
 
     def test_list(self):
         body, resp = self._json_request("/domains", 200)
@@ -58,6 +68,24 @@ class DomainTests(JsonTests):
         self.assertAttr(body, 'error', 'ResourceNotFound')
         self.assertAttr(body, 'message', "Unable to connect with NameService on host 'localhost_bad'")
 
+    def test_list_bad_redhawk_version(self):
+        domain.redhawk_remote_bug = True
+        body, resp = self._json_request("/domains/localhost:", 200)
+        body, resp = self._json_request("/domains/", 200)
+        body, resp = self._json_request("/domains/:", 200)
+        body, resp = self._json_request("/domains/localhost_awful:", 500)
+        self.assertAttr(body, 'error', 'Exception')
+        self.assertAttr(body, 'message', "Remote domain connectivity is unavailable in Redhawk <= 1.10.2")
+
+
+    def test_bad_redhawk_version(self):
+        domain.redhawk_remote_bug = True
+        body, resp = self._json_request("/domains/"+Default.DOMAIN_NAME, 200)
+        body, resp = self._json_request("/domains/:"+Default.DOMAIN_NAME, 200)
+        body, resp = self._json_request("/domains/localhost:"+Default.DOMAIN_NAME, 200)
+        body, resp = self._json_request("/domains/foobar:"+Default.DOMAIN_NAME, 500)
+        self.assertAttr(body, 'error', 'Exception')
+        self.assertAttr(body, 'message', "Remote domain connectivity is unavailable in Redhawk <= 1.10.2")
 
     def test_info(self):
         body, resp = self._json_request("/domains/"+Default.DOMAIN_NAME, 200)

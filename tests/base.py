@@ -132,9 +132,27 @@ class JsonAssertions(unittest.TestCase):
         assertResponse(response, codes)
         return data
 
+    def assertHasAttr(self, data, name):
+        '''
+            Assert dictionary has given attribute.
+        :param data: a dictionary
+        :param name: attribute name
+        :return: data
+        '''
+        self.assertTrue(name in data, msg="Missing attribute '%s'" % name)
+        return data
+
     def assertAttr(self, data, name, value):
+        '''
+            Assert dictionary has given attribute name having given value
+        :param data: a dictionary
+        :param name: attribute name
+        :param value: value to assert
+        :return: data right back
+        '''
         self.assertTrue(name in data, msg="Missing attribute '%s'" % name)
         self.assertEquals(data[name], value, msg="Attribute '%s' incorrect: expected value '%s' actual value '%s'" % (name, value, data[name]))
+        return data
 
     def assertList(self, data, name):
         self.assertTrue(name in data)
@@ -147,6 +165,21 @@ class JsonAssertions(unittest.TestCase):
             self.assertTrue('name' in item)
 
     def assertProperties(self, data):
+        '''
+            Asserts that the given data is a python representation of a REDHAWK properties
+        :param data: A property is a [
+            {
+               'kinds': [],
+               'name': 'FIXME',
+               'value': 'FIXME',
+               'scaType': 'FIXME',
+               'mode': 'FIXME',
+               'type': 'FIXME',
+               'id': 'FIXME"
+           },{
+           } ]
+        :return: None
+        '''
         self.assertTrue(isinstance(data, list))
         for prop in data:
             self.assertList(prop, 'kinds')

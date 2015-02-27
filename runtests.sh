@@ -34,4 +34,11 @@ done
 #nodeBooter $NBARGS -d /nodes/GPP/DeviceManager.dcd.xml  --domainname $RHDOMAIN || exit 1 &
 
 #sleep 4
-.virtualenv/bin/python /usr/bin/nosetests1.1 --with-doctest --with-coverage --where . --where model/ --where tests/ --where rest --cover-tests "$@"  2>&1 | tee tests.out
+#.virtualenv/bin/python /usr/bin/nosetests1.1 --with-doctest --with-coverage --where . --where model/ --where tests/ --where rest --cover-tests "$@"  2>&1 | tee tests.out
+
+# example test:Sysinfo
+
+if [ $# -lt 1 ] ; then
+    set -- test
+fi
+.virtualenv/bin/python /usr/bin/nosetests1.1 --with-doctest --with-coverage --cover-tests "$@"  2>&1 | tee tests.out

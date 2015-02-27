@@ -37,6 +37,7 @@ from tornado import websocket, gen
 from base import JsonAssertions, RedhawkTests
 # application imports
 from pyrest import Application
+from defaults import Default
 
 # all method returning suite is required by tornado.testing.main()
 def all():
@@ -56,7 +57,7 @@ class PortTests(RedhawkTests, AsyncHTTPTestCase, LogTrapTestCase, JsonAssertions
 
     @tornado.testing.gen_test
     def test_domain_get_instance(self):        
-        response = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url('/redhawk/rest/domains/REDHAWK_DEV'))
+        response = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url("%s/domains/%s" % (Default.REST_BASE, Default.DOMAIN_NAME)))
         self.assertEquals(200, response.code)
         data = json.loads(response.body)
 
@@ -66,7 +67,7 @@ class PortTests(RedhawkTests, AsyncHTTPTestCase, LogTrapTestCase, JsonAssertions
 
     def test_domain_get_failure(self):
         # callback must be used to get response to non-200 HTTPResponse
-        AsyncHTTPClient(self.io_loop).fetch(self.get_url('/redhawk/rest/domains/REDHAWK_DEV_FOO'), self.stop)
+        AsyncHTTPClient(self.io_loop).fetch(self.get_url("%s/domains/%s" % (Default.REST_BASE, 'REDHAWK_DEV_FOO')), self.stop)
         response = self.wait()
 
         self.assertEquals(404, response.code)
@@ -81,7 +82,7 @@ class PortTests(RedhawkTests, AsyncHTTPTestCase, LogTrapTestCase, JsonAssertions
         # get a list of waveforms
         id = yield self._launch('TestConfigureWaveform')
         self._async_sleep(1)
-        portr = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url('/redhawk/rest/domains/REDHAWK_DEV/applications/%s/ports' % id))
+        portr = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url("%s/domains/%s/applications/%s/ports" % (Default.REST_BASE, Default.DOMAIN_NAME, id)))
         self.assertEquals(200, portr.code)
         pdata = json.loads(portr.body)
         # FIXME: Test against a applications with ports

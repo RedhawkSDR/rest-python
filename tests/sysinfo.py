@@ -18,26 +18,22 @@
 # along with this program.  If not, see http://www.gnu.org/licenses/.
 #
 """
-TestCases for the REST API
-
-Classes:
-DomainTests --  /domain
-ApplicationTests -- /domain/{NAME}/applications
-ComponentTests -- /domain/{NAME}/applications/{ID}/components
-DeviceManagerTests -- /domain/{NAME}/deviceManagers
-DeviceTests -- /domain/{NAME}/deviceManagers/{ID}/devices
-SysinfoTests -- /sysinfo
+Tornado tests for the /domain portion of the REST API
 """
-__author__ = 'rpcanno'
+__author__ = 'depew'
 
+from base import JsonTests
 from defaults import Default
+import types
 
-from domain import DomainTests
-from devicemanager import DeviceManagerTests
-from device import DeviceTests
-from application import ApplicationTests
-from component import ComponentTests
-from bulkio import BulkIOTests
-from port import PortTests
-from concurrent import ConcurrencyTests
-from sysinfo import SysinfoTests
+
+class SysinfoTests(JsonTests):
+
+    def test_sysinfo(self):
+        body, resp = self._json_request("/sysinfo", 200)
+        self.assertHasAttr(body, 'supportsRemoteLocations')
+        self.assertHasAttr(body, 'redhawk.version')
+        self.assertHasAttr(body, 'rhweb.version')
+        if not isinstance(body['supportsRemoteLocations'], types.BooleanType):
+            self.fail("Expected properties.remoteLocations to be a boolean, got %s" % type(p['remoteLocations']))
+

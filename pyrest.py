@@ -27,6 +27,7 @@ from rest.devicemanager import DeviceManagers
 from rest.device import Devices, DeviceProperties
 from rest.port import PortHandler
 from rest.bulkio_handler import BulkIOWebsocketHandler
+from rest.sysinfo import SysInfoHandler
 
 import tornado.httpserver
 import tornado.web
@@ -43,7 +44,8 @@ define("debug", default=False, type=bool, help="Enable Tornado debug mode.  Relo
 
 _ID = r'/([^/]+)'
 _LIST = r'/?'
-_DOMAIN_PATH = r'/redhawk/rest/domains'
+_REST_PATH = r'/redhawk/rest'
+_DOMAIN_PATH = _REST_PATH + '/domains'
 _APPLICATION_PATH = _DOMAIN_PATH + _ID + r'/applications'
 _COMPONENT_PATH = _APPLICATION_PATH + _ID + r'/components'
 _DEVICE_MGR_PATH = _DOMAIN_PATH + _ID + r'/deviceManagers'
@@ -65,6 +67,8 @@ class Application(tornado.web.Application):
         handlers = [
             (r"/apps/(.*)/$", IndexHandler),
             (r"/apps/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(cwd, "apps")}),
+
+            (_REST_PATH + r'/sysinfo', SysInfoHandler, dict(redhawk=redhawk)),
 
             # Domains
             (_DOMAIN_PATH + _LIST, DomainInfo, dict(redhawk=redhawk)),

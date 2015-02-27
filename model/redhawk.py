@@ -24,9 +24,15 @@
     in domain.py and caches the domain object.
 """
 
+import pkg_resources
+import re
 from _utils.tasking import background_task
 
-from domain import Domain, scan_domains, ResourceNotFound
+from domain import Domain, scan_domains, ResourceNotFound, redhawk_remote_bug
+
+
+RHWEB_VERSION = '1.2.0'
+
 
 
 class Redhawk(object):
@@ -173,3 +179,18 @@ class Redhawk(object):
             return domain.find_device(path[1], path[2]), path[3:]
         raise ValueError("Bad path type %s.  Must be one of application, component, device-mgr or device" % path_type)
 
+
+    def get_redhawk_info(self):
+        try:
+            return self._redhawk_info
+        except AttributeError:
+            try:
+                version = get_redhawk_version()
+            except Exception:
+                version = 'unknown'
+            self._redhawk_info = {
+                'redhawk.version': version,
+                'rhweb.version': RHWEB_VERSION,
+                'supportsRemoteLocations': not redhawk_remote_bug
+            }
+            return self._redhawk_info
