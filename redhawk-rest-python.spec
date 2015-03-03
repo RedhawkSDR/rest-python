@@ -33,7 +33,7 @@ BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 Source0:        %{name}-%{version}.tar.gz
 
 Requires:       python
-Requires:       redhawk >= 1.10.2
+Requires:       redhawk >= 1.10
 Requires:       redhawk-devel
 Requires:       bulkioInterfaces
 Requires:       redhawk-web
