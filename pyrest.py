@@ -41,6 +41,7 @@ from tornado.options import define, options
 
 define('port', default=8080, type=int, help="server port")
 define("debug", default=False, type=bool, help="Enable Tornado debug mode.  Reloads code")
+define('staticpath', default=None, type=str, help='Path to the static content')
 
 _ID = r'/([^/]+)'
 _LIST = r'/?'
@@ -60,14 +61,13 @@ class Application(tornado.web.Application):
         # explicit _ioloop for unit testing
         _ioloop = kwargs.get('_ioloop', None)
         cwd = os.path.abspath(os.path.dirname(__import__(__name__).__file__))
+        static_path = kwargs.get('static_path', None)
 
         # REDHAWK Service
         redhawk = Redhawk()
 
-        handlers = [
-            (r"/apps/(.*)/$", IndexHandler),
-            (r"/apps/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(cwd, "apps")}),
 
+        handlers = [
             (_REST_PATH + r'/sysinfo', SysInfoHandler, dict(redhawk=redhawk)),
 
             # Domains
@@ -120,20 +120,34 @@ class Application(tornado.web.Application):
             (_DEVICE_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler,
                 dict(redhawk=redhawk, kind='device', _ioloop=_ioloop)),
         ]
+
+        if static_path:
+	    filehandles = [
+                (r"/$", IndexHandler, {"basepath": static_path}),
+                (r"/(.*)/$", IndexHandler, {"basepath": static_path}),
+                (r"/(.*)", tornado.web.StaticFileHandler, {"path": static_path})
+            ]
+            handlers.extend(filehandles)
+
         tornado.web.Application.__init__(self, handlers, *args, **kwargs)
 
 
 class IndexHandler(tornado.web.RequestHandler):
-    def get(self, path):
-        self.render("apps/"+path+"/index.html")
+    
+    def initialize(self, basepath):
+        self._basepath = basepath
+        
+    def get(self, path=""):
+        filepath = os.path.join(self._basepath, path, "index.html")
+        print "Rendering %s" % filepath
+        self.render(filepath)
 
 
 def main():
     tornado.options.parse_command_line()
-    application = Application(debug=options.debug)
+    application = Application(debug=options.debug, static_path=options['staticpath'])
     application.listen(options.port)
     ioloop.IOLoop.instance().start()
 
 if __name__ == '__main__':
     main()
-

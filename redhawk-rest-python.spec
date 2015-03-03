@@ -24,7 +24,7 @@
 
 Prefix:         %{_prefix}
 Name:		redhawk-rest-python
-Version:	2.1.0
+Version:	2.1.1
 Release:	1%{?dist}
 Summary:	A REDHAWK REST application that exposes the entire domain.
 
@@ -89,3 +89,6 @@ rm -rf %{buildroot}
 %{_nginx}/rest-python.enabled
 %{_supervisor}/redhawk-rest-python.conf
 
+%changelog
+* Tue Mar 3  2015 Douglas Pew <douglas.pew@axiosengineering.com> - 2.1.1-0
+- Server disables remote location if buggy REDHAWK, added static file path
