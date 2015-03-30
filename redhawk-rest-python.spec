@@ -22,11 +22,15 @@
 %define _supervisor /etc/redhawk-web/supervisor.d
 %define _nginx /etc/nginx/conf.d/redhawk-sites
 
+%define debug_package %{nil}
+
+
 Prefix:         %{_prefix}
 Name:		redhawk-rest-python
 Version:	2.1.1
 Release:	1%{?dist}
 Summary:	A REDHAWK REST application that exposes the entire domain.
+BuildArch:      noarch
 
 License:	GPL
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
