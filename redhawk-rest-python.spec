@@ -40,7 +40,6 @@ Requires:       python
 Requires:       redhawk >= 1.10
 Requires:       redhawk-devel
 Requires:       bulkioInterfaces
-Requires:       redhawk-web
 Requires:       rhweb-python-tornado
 Requires:	python-futures
 
