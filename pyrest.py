@@ -39,9 +39,13 @@ from model.redhawk import Redhawk
 # setup command line options
 from tornado.options import define, options
 
+rhweb_path = os.getenv('RHWEBPATH', '/var/redhawk/web')
+default_docpath = os.path.join(rhweb_path, 'redhawk-rest-doc')
+
 define('port', default=8080, type=int, help="server port")
 define("debug", default=False, type=bool, help="Enable Tornado debug mode.  Reloads code")
 define('staticpath', default=None, type=str, help='Path to the static content')
+define('docpath', default=default_docpath, type=str, help='Path to the REDHAWK REST documentation')
 
 _ID = r'/([^/]+)'
 _LIST = r'/?'
@@ -54,14 +58,36 @@ _DEVICE_PATH = _DEVICE_MGR_PATH + _ID + r'/devices'
 _PROPERTIES_PATH = r'/properties'
 _PORT_PATH = r'/ports'
 _BULKIO_PATH = _PORT_PATH + _ID + r'/bulkio'
+_DOC_PATH = _REST_PATH + r'/doc'
 
 
 class Application(tornado.web.Application):
     def __init__(self, *args, **kwargs):
+        '''
+            Create the REDHAWK Rest Application
+            Parameters
+            ----------
+            docpath - str
+                   Optional path to RESTful documentation.
+                   Defaults to $REDHAWKWEB/share/redhawk-rest-doc.
+            static-path - str
+                   Optional static content path. Defaults to None (no content)
+                   Served as root content.  The RESTful content takes precident over
+                   static content.
+            _ioloop - tornado.ioloop.IOLoop
+                   Optional Tornado IOLoop instance used for 
+                   registering callbacks.  Useful for unit test
+                   which have their own IOLoop. Defaults to current
+                   IOLoop.
+
+        '''
+
         # explicit _ioloop for unit testing
         _ioloop = kwargs.get('_ioloop', None)
-        cwd = os.path.abspath(os.path.dirname(__import__(__name__).__file__))
         static_path = kwargs.get('static_path', None)
+        docpath = kwargs.get('docpath', None)
+        if not docpath:
+            docpath = default_docpath
 
         # REDHAWK Service
         redhawk = Redhawk()
@@ -119,6 +145,8 @@ class Application(tornado.web.Application):
                 dict(redhawk=redhawk, kind='device')),
             (_DEVICE_PATH + _ID + _BULKIO_PATH, BulkIOWebsocketHandler,
                 dict(redhawk=redhawk, kind='device', _ioloop=_ioloop)),
+            (_DOC_PATH + "/$",  IndexHandler, dict(basepath=docpath)),
+            (_DOC_PATH + "/(.*)$",  tornado.web.StaticFileHandler, dict(path=docpath))
         ]
 
         if static_path:
@@ -145,7 +173,7 @@ class IndexHandler(tornado.web.RequestHandler):
 
 def main():
     tornado.options.parse_command_line()
-    application = Application(debug=options.debug, static_path=options['staticpath'])
+    application = Application(debug=options.debug, static_path=options['staticpath'], docpath=options['docpath'])
     application.listen(options.port)
     ioloop.IOLoop.instance().start()
 
