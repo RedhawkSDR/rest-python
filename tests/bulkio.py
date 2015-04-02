@@ -90,7 +90,7 @@ class BulkIOTests(JsonTests, AsyncHTTPTestCase, LogTrapTestCase):
         if not cid:
             self.fail('Unable to find SigGen component')
 
-        url = self.get_url("%s/components/%s/ports/out/bulkio"%(Default.REST_BASE+self.base_url,cid)).replace('http','ws')
+        url = self.get_url("%s/components/%s/ports/dataFloat_out/bulkio"%(Default.REST_BASE+self.base_url,cid)).replace('http','ws')
         conn1 = yield websocket.websocket_connect(url,
                                                   io_loop=self.io_loop) 
 
