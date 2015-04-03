@@ -51,8 +51,9 @@ class Devices(JsonHandler, PropertyHelper, PortHelper):
         self._render_json(info)
 
 
-class DeviceProperties(web.RequestHandler):
+class DeviceProperties(JsonHandler, PropertyHelper):
 
-    def get(self, *args):
-        self.set_status(500)
-        self.write(dict(status='Device Properties handler not implemented'))
+    @gen.coroutine
+    def get(self, domain_name, dev_mgr_id, dev_id=None):
+        dev = yield self.redhawk.get_device(domain_name, dev_mgr_id, dev_id)
+        self._render_json(dict(properties=self.format_properties(dev._properties)))
