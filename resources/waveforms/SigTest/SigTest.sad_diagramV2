@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<notation:Diagram xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:diagram="http://sca.jpeojtrs.mil/diagram" xmlns:notation="http://www.eclipse.org/gmf/runtime/1.0.2/notation" xmlns:sad="http://sca.jpeojtrs.mil/sad" xmi:id="_Gxe5AX_CEeSNfMNiRRtsGA" type="Sad" name="SigTest.sad_diagramV2" measurementUnit="Pixel">
+  <children xmi:type="notation:Shape" xmi:id="_nAP0oX_EEeSLA6PJ-Tl8Ww" type="3001" fontName="Sans">
+    <children xmi:type="notation:DecorationNode" xmi:id="_nARCwH_EEeSLA6PJ-Tl8Ww" type="5006"/>
+    <children xmi:type="notation:DecorationNode" xmi:id="_nARp0H_EEeSLA6PJ-Tl8Ww" type="7002">
+      <styles xmi:type="notation:SortingStyle" xmi:id="_nARp0X_EEeSLA6PJ-Tl8Ww"/>
+      <styles xmi:type="notation:FilteringStyle" xmi:id="_nARp0n_EEeSLA6PJ-Tl8Ww"/>
+    </children>
+    <element xmi:type="sad:SadComponentPlacement" href="SigTest.sad.xml#//@partitioning/@componentPlacement.0"/>
+    <layoutConstraint xmi:type="notation:Bounds" xmi:id="_nAP0on_EEeSLA6PJ-Tl8Ww" x="192" y="96"/>
+  </children>
+  <styles xmi:type="notation:DiagramStyle" xmi:id="_Gxe5An_CEeSNfMNiRRtsGA"/>
+  <styles xmi:type="diagram:EObjectContainerStyle" xmi:id="_Gxe5A3_CEeSNfMNiRRtsGA" name="FindByStubContainer"/>
+  <element xmi:type="sad:SoftwareAssembly" href="SigTest.sad.xml#DCE:cea77503-2785-4af1-af5e-56b07176eb8f"/>
+</notation:Diagram>

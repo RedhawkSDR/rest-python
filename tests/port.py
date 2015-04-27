@@ -23,16 +23,12 @@
 import unittest
 import json
 import logging
-import time
-import threading
-from functools import partial
 
 # tornado imports
 import tornado
 import tornado.testing
 from tornado.testing import AsyncHTTPTestCase, LogTrapTestCase
 from tornado.httpclient import AsyncHTTPClient, HTTPRequest
-from tornado import websocket, gen
 
 from base import JsonAssertions, RedhawkTests
 # application imports
@@ -53,7 +49,6 @@ class PortTests(RedhawkTests, AsyncHTTPTestCase, LogTrapTestCase, JsonAssertions
 
     def get_app(self):
         return Application(debug=True, _ioloop=self.io_loop)
-
 
     @tornado.testing.gen_test
     def test_domain_get_instance(self):        
@@ -80,10 +75,15 @@ class PortTests(RedhawkTests, AsyncHTTPTestCase, LogTrapTestCase, JsonAssertions
     def test_application_port_get(self):
         self._async_clean_applications()
         # get a list of waveforms
-        id = yield self._launch('TestConfigureWaveform')
+        id = yield self._launch('SigTest')
         self._async_sleep(1)
         portr = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url("%s/domains/%s/applications/%s/ports" % (Default.REST_BASE, Default.DOMAIN_NAME, id)))
         self.assertEquals(200, portr.code)
         pdata = json.loads(portr.body)
+        # imp
+        # orting here so that only this test case fails if it doesn't exist
+        self.validate_json(pdata, "ports.schema.json")
+
         # FIXME: Test against a applications with ports
-        logging.debug("Found port data %s", pdata)
+        # logging.debug("Found port data %s", pdata)
+        # self.fail("BAD")

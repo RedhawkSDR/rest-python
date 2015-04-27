@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://redhawksdr.org",
+  "type": "array",
+  "items": {
+    "id": "http://redhawksdr.org/1",
+    "type": "object",
+    "properties": {
+      "idl": {
+        "id": "http://redhawksdr.org/1/idl",
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "id": "http://redhawksdr.org/1/idl/namespace",
+            "type": "string",
+            "enum": [
+              "BULKIO"
+            ]
+          },
+          "version": {
+            "id": "http://redhawksdr.org/1/idl/version",
+            "type": "string",
+            "enum": [
+              ":1.0"
+            ]
+          },
+          "type": {
+            "id": "http://redhawksdr.org/1/idl/type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "namespace",
+          "version",
+          "type"
+        ]
+      },
+      "direction": {
+        "id": "http://redhawksdr.org/1/direction",
+        "type": "string",
+        "enum": [
+          "Uses",
+          "Provides"
+        ]
+      },
+      "name": {
+        "id": "http://redhawksdr.org/1/name",
+        "type": "string"
+      },
+      "repId": {
+        "id": "http://redhawksdr.org/1/repId",
+        "type": "string"
+      }
+    },
+    "required": [
+      "idl",
+      "direction",
+      "name",
+      "repId"
+    ]
+  },
+  "required": ["1"]
+}

@@ -1,2 +1,4 @@
-tornado==4.0.2
+numpy
+tornado>=4.0.2
 futures==2.1.6
+jsonschema

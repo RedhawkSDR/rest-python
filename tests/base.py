@@ -35,7 +35,7 @@ from tornado import gen
 from tornado import httputil, stack_context
 from tornado.concurrent import TracebackFuture
 
-import json
+import json, os
 
 from defaults import Default
 
@@ -190,6 +190,13 @@ class JsonAssertions(unittest.TestCase):
             self.assertTrue('type' in prop)
             self.assertTrue('id' in prop)
 
+
+    def validate_json(self, data, schemapath):
+        spath = os.path.join(os.path.dirname(__file__), '../resources/schemas', schemapath)
+        with open(spath) as f:
+            sdata = json.load(f)
+        from jsonschema import validate
+        validate(data, sdata)
 
 
 class JsonTests(AsyncHTTPTestCase, JsonAssertions):
