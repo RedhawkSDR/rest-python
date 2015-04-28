@@ -28,7 +28,7 @@ import logging
 import tornado
 import tornado.testing
 from tornado.testing import AsyncHTTPTestCase, LogTrapTestCase
-from tornado.httpclient import AsyncHTTPClient, HTTPRequest
+from tornado.httpclient import AsyncHTTPClient
 
 from base import JsonAssertions, RedhawkTests
 # application imports
@@ -49,27 +49,6 @@ class PortTests(RedhawkTests, AsyncHTTPTestCase, LogTrapTestCase, JsonAssertions
 
     def get_app(self):
         return Application(debug=True, _ioloop=self.io_loop)
-
-    @tornado.testing.gen_test
-    def test_domain_get_instance(self):        
-        response = yield AsyncHTTPClient(self.io_loop).fetch(self.get_url("%s/domains/%s" % (Default.REST_BASE, Default.DOMAIN_NAME)))
-        self.assertEquals(200, response.code)
-        data = json.loads(response.body)
-
-        for name in ('applications', 'properties', 'deviceManagers', 'id', 'name'):
-            self.assertTrue(name in data, "json missing %s" % name)
-
-
-    def test_domain_get_failure(self):
-        # callback must be used to get response to non-200 HTTPResponse
-        AsyncHTTPClient(self.io_loop).fetch(self.get_url("%s/domains/%s" % (Default.REST_BASE, 'REDHAWK_DEV_FOO')), self.stop)
-        response = self.wait()
-
-        self.assertEquals(404, response.code)
-        pdata = json.loads(response.body)
-        logging.debug("Found port data %s", pdata)
-        # FIXME: Check error response
-
 
     @tornado.testing.gen_test
     def test_application_port_get(self):

@@ -22,14 +22,18 @@ Tornado tests for the /domain portion of the REST API
 """
 __author__ = 'rpcanno'
 
+import logging
+import json
+import socket
+import tornado
+from tornado.httpclient import AsyncHTTPClient
+
 from base import JsonTests
 from defaults import Default
-import socket
 from model import domain
 
 
 class DomainTests(JsonTests):
-    
     def setUp(self):
         self.redhawk_remote_bug = domain.redhawk_remote_bug
         super(DomainTests, self).setUp()
@@ -51,7 +55,7 @@ class DomainTests(JsonTests):
                 self.fail("Not expecting location in domain (no ':').  Received '%s'" % d)
 
     def test_list_location(self):
-        hosts = [ 'localhost', socket.gethostname() ]
+        hosts = ['localhost', socket.gethostname()]
         for h in hosts:
             body, resp = self._json_request("/domains/%s:" % h, 200)
             self.assertTrue('domains' in body)
@@ -80,15 +84,15 @@ class DomainTests(JsonTests):
 
     def test_bad_redhawk_version(self):
         domain.redhawk_remote_bug = True
-        body, resp = self._json_request("/domains/"+Default.DOMAIN_NAME, 200)
-        body, resp = self._json_request("/domains/:"+Default.DOMAIN_NAME, 200)
-        body, resp = self._json_request("/domains/localhost:"+Default.DOMAIN_NAME, 200)
-        body, resp = self._json_request("/domains/foobar:"+Default.DOMAIN_NAME, 500)
+        body, resp = self._json_request("/domains/" + Default.DOMAIN_NAME, 200)
+        body, resp = self._json_request("/domains/:" + Default.DOMAIN_NAME, 200)
+        body, resp = self._json_request("/domains/localhost:" + Default.DOMAIN_NAME, 200)
+        body, resp = self._json_request("/domains/foobar:" + Default.DOMAIN_NAME, 500)
         self.assertAttr(body, 'error', 'Exception')
         self.assertAttr(body, 'message', "Remote domain connectivity is unavailable in Redhawk <= 1.10.2")
 
     def test_info(self):
-        body, resp = self._json_request("/domains/"+Default.DOMAIN_NAME, 200)
+        body, resp = self._json_request("/domains/" + Default.DOMAIN_NAME, 200)
 
         self.assertTrue('name' in body)
         self.assertEquals(body['name'], Default.DOMAIN_NAME)
@@ -99,7 +103,7 @@ class DomainTests(JsonTests):
         self.assertTrue('id' in body)
 
     def test_location_good(self):
-        body, resp = self._json_request("/domains/localhost:"+Default.DOMAIN_NAME, 200)
+        body, resp = self._json_request("/domains/localhost:" + Default.DOMAIN_NAME, 200)
 
         self.assertTrue('name' in body)
         self.assertEquals(body['name'], Default.DOMAIN_NAME)
@@ -110,7 +114,7 @@ class DomainTests(JsonTests):
         self.assertTrue('id' in body)
 
     def test_location_bad(self):
-        domainname='localh:%s' % Default.DOMAIN_NAME
+        domainname = 'localh:%s' % Default.DOMAIN_NAME
         body, resp = self._json_request("/domains/%s" % domainname, 404)
         self.assertAttr(body, 'error', 'ResourceNotFound')
         self.assertAttr(body, 'message', "Unable to find domain '%s'" % domainname)
@@ -119,5 +123,28 @@ class DomainTests(JsonTests):
         body, resp = self._json_request("/domains/ldskfadjklfsdjkfasdl", 404)
         print body
         self._resource_not_found(body)
+
+    @tornado.testing.gen_test
+    def test_domain_get_instance(self):
+        response = yield AsyncHTTPClient(self.io_loop).fetch(
+            self.get_url("%s/domains/%s" % (Default.REST_BASE, Default.DOMAIN_NAME)))
+        self.assertEquals(200, response.code)
+        data = json.loads(response.body)
+
+        for name in ('applications', 'properties', 'deviceManagers', 'id', 'name'):
+            self.assertTrue(name in data, "json missing %s" % name)
+
+    def test_domain_get_failure(self):
+        # callback must be used to get response to non-200 HTTPResponse
+        AsyncHTTPClient(self.io_loop).fetch(self.get_url("%s/domains/%s" % (Default.REST_BASE, 'REDHAWK_DEV_FOO')),
+                                            self.stop)
+        response = self.wait()
+
+        self.assertEquals(404, response.code)
+        pdata = json.loads(response.body)
+        logging.debug("Found port data %s", pdata)
+        # FIXME: Check error response
+
+
 
 
