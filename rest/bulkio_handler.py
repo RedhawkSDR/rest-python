@@ -26,6 +26,8 @@ from bulkio.bulkioInterfaces import BULKIO__POA
 from tornado import ioloop, gen
 from tornado import websocket
 
+from urlparse import urlparse
+
 import numpy
 
 from model.domain import Domain, ResourceNotFound
@@ -66,6 +68,15 @@ class BulkIOWebsocketHandler(websocket.WebSocketHandler):
         if not _ioloop:
             _ioloop = ioloop.IOLoop.current()
         self._ioloop = _ioloop
+
+
+
+    def check_origin(self, origin):
+        host = self.request.headers.get("Host")
+        parsed_origin = urlparse(origin)
+        origin = parsed_origin.hostname
+        origin = origin.lower()
+        return host == origin
 
     @gen.coroutine
     def open(self, *args):
