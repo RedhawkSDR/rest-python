@@ -31,35 +31,34 @@ import numpy
 from model.domain import Domain, ResourceNotFound
 from asyncport import AsyncPort
 
-
-def _floats2bin(flist):
-    """
-        Converts a list of python floating point values
-        to a packed array of IEEE 754 32 bit floating point
-    """
-    return numpy.array(flist).astype('float32').tostring()
-
-
-def _doubles2bin(flist):
-    """
-        Converts a list of python floating point values
-        to a packed array of IEEE 754 64 bit floating point
-    """
-    return numpy.array(flist).astype('float64').tostring()
+def _make_converter(numpy_type):
+    def _list2bin(datalist):
+        """
+            Converts a list of values to a packed array of
+            binary values.  See
+            http://docs.scipy.org/doc/numpy/user/basics.types.html
+            for list of types.
+        """
+        return numpy.array(datalist).astype(numpy_type).tostring()
+    return _list2bin
 
 
-def _pass_through(flist):
-    return flist
+DATA_CONVERSION_MAP = {
+    # datatype: converter
+    'dataFloat':  _make_converter('float32'),
+    'dataDouble': _make_converter('float64'),
+    'dataOctet': _make_converter('uint8'),
+    'dataLong': _make_converter('int32'),
+    'dataChar': _make_converter('int8'),
+    'dataLongLong': _make_converter('int64'),
+    'dataShort': _make_converter('int16'),
+    'dataUlong': _make_converter('uint32'),
+    'dataUlongLong': _make_converter('uint64'),
+    'dataUshort': _make_converter('uint16'),
+}
 
 
 class BulkIOWebsocketHandler(websocket.WebSocketHandler):
-
-    data_conversion_map = {
-        'dataFloat':  _floats2bin,
-        'dataDouble': _doubles2bin,
-        'dataOctet': _pass_through,
-        'dataShort': _pass_through
-    }
 
     def initialize(self, kind, redhawk=None, _ioloop=None):
         self.kind = kind
@@ -85,7 +84,7 @@ class BulkIOWebsocketHandler(websocket.WebSocketHandler):
                             self.port = obj.getPort(str(path[0]))
                             logging.debug("Found port %s", self.port)
 
-                            self.converter = self.data_conversion_map[data_type]
+                            self.converter = DATA_CONVERSION_MAP[data_type]
 
                             bulkio_poa = getattr(BULKIO__POA, data_type)
                             logging.debug(bulkio_poa)

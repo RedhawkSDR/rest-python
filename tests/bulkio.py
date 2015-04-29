@@ -24,6 +24,7 @@ import unittest
 import json
 import logging
 import time
+import struct
 import threading
 from functools import partial
 
@@ -38,6 +39,7 @@ from tornado import websocket, gen
 from pyrest import Application
 from base import JsonTests
 from defaults import Default
+from rest.bulkio_handler import DATA_CONVERSION_MAP
 
 # all method returning suite is required by tornado.testing.main()
 #def all():
@@ -121,6 +123,85 @@ class BulkIOTests(JsonTests, AsyncHTTPTestCase, LogTrapTestCase):
 
         if not foundSRI:
             self.fail('Did not receive SRI')
+
+
+class TestDataConverters(unittest.TestCase):
+
+    def _testDataConverter(self, dtype, bpa, input, expected):
+        """
+          Test data converter output
+        :param dtype: the BULKIO data type
+        :param bpa: bytes per atom
+        :param input: list of atoms
+        :param expected: string array expected
+        """
+        # do sanity check on input
+        if bpa * len(input) != len(expected):
+            self.fail("Bad expected value for %s type.  Expected %d bytes, got %d bytes" %
+                      (dtype, bpa * len(input), len(expected)))
+        converter = DATA_CONVERSION_MAP[dtype]
+        self.assertEquals(expected, converter(input))
+
+    def testDataConverterDouble(self):
+        dmax = 1.7e308
+        dmin = 1.7e-308
+        data = [dmax, dmin, -dmax, -dmin, 0.0]
+        self._testDataConverter('dataDouble', 8, data, struct.pack('=ddddd', *data), )
+
+    def testDataConverterFloat(self):
+        fmax = 3.4e38
+        fmin = 3.4e-38
+        data = [fmax, fmin, -fmax, -fmin, 0.0]
+        self._testDataConverter('dataFloat', 4, data, struct.pack('=fffff', *data))
+
+    def testDataConverterShort(self):
+        smax = (1<<15)-1
+        smin = -(1<<15)
+        data = [smax, smin, 15, -15, 0]
+        self._testDataConverter('dataShort', 2, data, struct.pack('=hhhhh', *data))
+
+    def testDataConverterLong(self):
+        lmax = (1<<31)-1
+        lmin = -(1<<31)
+        data = [lmax, lmin, 15, -15, 0]
+        self._testDataConverter('dataLong', 4, data, struct.pack('=lllll', *data))
+
+    def testDataConverterLongLong(self):
+        lmax = (1<<63)-1
+        lmin = -(1<<63)
+        data = [lmax, lmin, 15, -15, 0]
+        self._testDataConverter('dataLongLong', 8, data, struct.pack('=qqqqq', *data))
+
+    def testDataConverterOctet(self):
+        omax = (1<<8)-1
+        omin = 0
+        data = [omax, omin, 15, 0]
+        self._testDataConverter('dataOctet', 1, data, struct.pack('=BBBB', *data))
+
+    def testDataConverterULong(self):
+        lmax = (1<<32)-1
+        lmin = 0
+        data = [lmax, lmin, 15, 0]
+        self._testDataConverter('dataUlong', 4, data, struct.pack('=LLLL', *data))
+
+    def testDataConverterULongLong(self):
+        lmax = (1<<64)-1
+        lmin = 0
+        data = [lmax, lmin, 15, 0]
+        self._testDataConverter('dataUlongLong', 8, data, struct.pack('=QQQQ', *data))
+
+    def testDataConverterUShort(self):
+        lmax = (1<<16)-1
+        lmin = 0
+        data = [lmax, lmin, 15, 0]
+        self._testDataConverter('dataUshort', 2, data, struct.pack('=HHHH', *data))
+
+    def testDataConverterChar(self):
+        lmax = (1<<7)-1
+        lmin = -(1<<7)
+        data = [lmax, lmin, 15, -15, 0]
+        self._testDataConverter('dataChar', 1, data, struct.pack('=bbbbb', *data))
+
 
 
 

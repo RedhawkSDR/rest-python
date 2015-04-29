@@ -37,7 +37,7 @@ from devicemanager import DeviceManagerTests
 from device import DeviceTests
 from application import ApplicationTests
 from component import ComponentTests
-from bulkio import BulkIOTests
+from bulkio import BulkIOTests, TestDataConverters
 from port import PortTests
 from concurrent import ConcurrencyTests
 from sysinfo import SysinfoTests
