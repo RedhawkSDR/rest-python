@@ -21,13 +21,14 @@
 REDHAWK Helper class used by the Server Handlers
 """
 
-import sys
 import logging
 import re
 from ossie.utils import redhawk
 from ossie.utils.redhawk.channels import ODMListener
+from ossie.cf.CF import InvalidObjectReference
 from omniORB import CORBA
 
+_logger = logging.getLogger(__name__)
 
 class ResourceNotFound(Exception):
     def __init__(self, resource='resource', name='Unknown', msg=None):
@@ -57,7 +58,7 @@ class ApplicationReleaseError(Exception):
         return "Not able to release waveform '%s'. %s" % (self.name, self.msg)
 
 def scan_domains(location=None):
-    print "HERE!\n\n\n %s" % redhawk_remote_bug
+    _logger.debug("Scan domains(location=%s). redhawk_remote_bug=%s", location, redhawk_remote_bug)
     if redhawk_remote_bug and location and location != 'localhost':
         raise Exception('Remote domain connectivity is unavailable in Redhawk <= 1.10.2')
     
@@ -232,14 +233,14 @@ def get_redhawk_version():
         dist = pkg_resources.get_distribution('ossiepy')
         return _parse_dist_version(dist.parsed_version)
     except Exception, e:
-        logging.exception("Unable to determine redhawk_version")
+        _logger.exception("Unable to determine redhawk_version")
         raise
 
 def has_remote_location_bug():
     try:
         return _identify_buggy_redhawk_location(get_redhawk_version())
     except Exception, e:
-        logging.exception("Unable to determine redhawk_version so turning off remote locations")
+        _logger.exception("Unable to determine redhawk_version so turning off remote locations")
         return True
     
 redhawk_remote_bug = has_remote_location_bug()
@@ -255,19 +256,16 @@ class Domain:
         if redhawk_remote_bug and location and location != 'localhost':
             raise Exception('Remote domain connectivity is unavailable in Redhawk <= 1.10.2')
 
-        logging.debug("Establishing domain %s at location %s", domainname, location,  exc_info=True)
+        _logger.debug("Establishing domain %s at location %s", domainname, location,  exc_info=True)
         
         self._domainref = domainref
         self.name = domainname
         self.location = location
-        # import pdb
-        # pdb.set_trace()
-
 
         try:
             self._establish_domain()
         except StandardError, e:
-            logging.warn("Unable to find domain %s", e, exc_info=1)
+            _logger.warn("Unable to find domain %s", e, exc_info=1)
             raise ResourceNotFound("domain", domainref)
 
     def _odm_response(self, event):
@@ -276,12 +274,13 @@ class Domain:
 
     def _connect_odm_listener(self):
         
-        self.odmListener = ODMListener()
-        self.odmListener.connect(self.domMgr_ptr)
-        self.odmListener.deviceManagerAdded.addListener(self._odm_response)
-        self.odmListener.deviceManagerRemoved.addListener(self._odm_response)
-        self.odmListener.applicationAdded.addListener(self._odm_response)
-        self.odmListener.applicationRemoved.addListener(self._odm_response)
+        listener = ODMListener()
+        listener.connect(self.domMgr_ptr)
+        listener.deviceManagerAdded.addListener(self._odm_response)
+        listener.deviceManagerRemoved.addListener(self._odm_response)
+        listener.applicationAdded.addListener(self._odm_response)
+        listener.applicationRemoved.addListener(self._odm_response)
+        self.odmListener = listener
 
     def _establish_domain(self):
         redhawk.setTrackApps(False)
@@ -291,7 +290,11 @@ class Domain:
             raise ResourceNotFound('domain', self._domainref)
         
         self.domMgr_ptr.__odmListener = None
-        self._connect_odm_listener()
+        try:
+            self._connect_odm_listener()
+        except InvalidObjectReference:
+            _logger.warn("%s: Unable to connect with EventChannel", self._domainref,
+                         exc_info=True)
 
     def properties(self):
         props = self.domMgr_ptr.query([])  # TODO: self.domMgr_ptr._properties
