@@ -70,13 +70,23 @@ class BulkIOWebsocketHandler(websocket.WebSocketHandler):
         self._ioloop = _ioloop
 
 
+# If Websockets are getting a 403 error, one workaround is
+# to have check_origin always return True
+#
+# Please note that if doing a reverse proxy, set the
+# Host header to the origin. For example, an nginx config
+# to proxy 81 to port 9401 (running pyrest.py) on nginx:
+#
+#     location /redhawk/rest/ {
+#         proxy_set_header Host $host:81;
+#         proxy_pass http://localhost:9401;
+#         proxy_set_header Upgrade $http_upgrade;
+#         proxy_set_header Connection "Upgrade";
+#     }
 
-    def check_origin(self, origin):
-        host = self.request.headers.get("Host")
-        parsed_origin = urlparse(origin)
-        origin = parsed_origin.hostname
-        origin = origin.lower()
-        return host == origin
+# Workaround:
+#    def check_origin(self, origin):
+#        return True
 
     @gen.coroutine
     def open(self, *args):
